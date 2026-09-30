@@ -37,8 +37,9 @@ public enum PUI {
         public static func tile(_ side: CGFloat) -> CGFloat { (side * 0.27).rounded() }
         /// The system popover, concentric with a card inset by the popover margin.
         public static let popover: CGFloat = card + Popover.margin
-        /// The settings window.
-        public static let window: CGFloat = 20
+        /// The settings window: the corner of a macOS 26 window with a unified toolbar,
+        /// which `NSWindow.puiConfigureForSettings()` sets up.
+        public static let window: CGFloat = 26
 
         /// The radius of a shape inset by `inset` inside a shape of radius `outer`,
         /// so both corners share a center and the gap between them stays even.

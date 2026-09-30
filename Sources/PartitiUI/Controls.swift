@@ -249,26 +249,37 @@ public struct SecondaryButtonStyle: ButtonStyle {
 
 /// The small primary capsule used to join a call.
 public struct JoinButton: View {
+    /// How big the capsule is.
+    public enum Size: Sendable {
+        /// 22 pt, on its own in a card.
+        case regular
+        /// 18 pt, over the details line of a row.
+        case compact
+    }
+
     var title: String
+    var size: Size
     var action: () -> Void
     @Environment(\.puiAccent) private var accent
     @Environment(\.colorScheme) private var scheme
     @Environment(\.isEnabled) private var isEnabled
 
-    public init(_ title: String = "Join", action: @escaping () -> Void) {
+    public init(_ title: String = "Join", size: Size = .regular, action: @escaping () -> Void) {
         self.title = title
+        self.size = size
         self.action = action
     }
 
     public var body: some View {
+        let compact = size == .compact
         let ink = Ink(scheme)
         Button(action: action) {
             Label(title, systemImage: "video.fill")
-                .labelStyle(TightLabelStyle(spacing: PUI.Space.xs))
-                .font(.system(size: 11, weight: .semibold))
+                .labelStyle(TightLabelStyle(spacing: compact ? 3 : PUI.Space.xs))
+                .font(.system(size: compact ? 10 : 11, weight: .semibold))
                 .foregroundStyle(!isEnabled ? ink.tertiary : (accent.prefersDarkLabel ? Color.black.opacity(0.82) : .white))
-                .padding(.horizontal, PUI.Space.m + 2)
-                .frame(height: PUI.Control.small)
+                .padding(.horizontal, compact ? PUI.Space.s + 1 : PUI.Space.m + 2)
+                .frame(height: compact ? 18 : PUI.Control.small)
                 .background {
                     if isEnabled {
                         ZStack {

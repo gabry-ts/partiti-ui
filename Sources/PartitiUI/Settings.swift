@@ -344,6 +344,7 @@ public struct SettingsSidebar: View {
     let sections: [SidebarSection]
     @Binding var selection: String
     var topInset: CGFloat
+    var itemMenu: ((SidebarItem) -> AnyView)?
     @Environment(\.puiAccent) private var accent
     @Environment(\.colorScheme) private var scheme
 
@@ -352,6 +353,14 @@ public struct SettingsSidebar: View {
         self.sections = sections
         self._selection = selection
         self.topInset = topInset
+    }
+
+    /// `itemMenu` builds the context menu of an entry, such as Rename and Delete for a
+    /// user-made item; entries it builds nothing for have no menu.
+    public init<ItemMenu: View>(_ sections: [SidebarSection], selection: Binding<String>, topInset: CGFloat = 44,
+                                @ViewBuilder itemMenu: @escaping (SidebarItem) -> ItemMenu) {
+        self.init(sections, selection: selection, topInset: topInset)
+        self.itemMenu = { AnyView(itemMenu($0)) }
     }
 
     public var body: some View {
@@ -380,6 +389,7 @@ public struct SettingsSidebar: View {
         return Button { selection = item.id } label: { rowLabel(item, on: on, ink) }
             .buttonStyle(.plain)
             .accessibilityAddTraits(on ? .isSelected : [])
+            .contextMenu { if let itemMenu { itemMenu(item) } }
     }
 
     private func rowLabel(_ item: SidebarItem, on: Bool, _ ink: Ink) -> some View {
@@ -418,6 +428,7 @@ public struct SettingsWindow<Pane: View>: View {
     let sections: [SidebarSection]
     @Binding var selection: String
     let pane: Pane
+    var itemMenu: ((SidebarItem) -> AnyView)?
     @Environment(\.colorScheme) private var scheme
 
     /// `pane` is built for the current `selection`, typically with a `switch` on it.
@@ -427,12 +438,21 @@ public struct SettingsWindow<Pane: View>: View {
         self.pane = pane()
     }
 
+    /// `itemMenu` builds the context menu of a sidebar entry; entries it builds nothing
+    /// for have no menu.
+    public init<ItemMenu: View>(sections: [SidebarSection], selection: Binding<String>,
+                                @ViewBuilder itemMenu: @escaping (SidebarItem) -> ItemMenu,
+                                @ViewBuilder pane: () -> Pane) {
+        self.init(sections: sections, selection: selection, pane: pane)
+        self.itemMenu = { AnyView(itemMenu($0)) }
+    }
+
     public var body: some View {
         let dark = scheme == .dark
         let sidebarShape = RoundedRectangle(cornerRadius: PUI.Radius.concentric(PUI.Radius.window, inset: PUI.Space.m),
                                             style: .continuous)
         HStack(spacing: 0) {
-            SettingsSidebar(sections, selection: $selection)
+            sidebar
                 .frame(width: PUI.Window.sidebar)
                 .frame(maxHeight: .infinity, alignment: .top)
                 .puiGlass(sidebarShape)
@@ -442,6 +462,16 @@ public struct SettingsWindow<Pane: View>: View {
         }
         .background(dark ? Color(white: 0.135) : Color(white: 0.955))
         .ignoresSafeArea(.container, edges: .top)
+    }
+}
+
+private extension SettingsWindow {
+    @ViewBuilder var sidebar: some View {
+        if let itemMenu {
+            SettingsSidebar(sections, selection: $selection, itemMenu: itemMenu)
+        } else {
+            SettingsSidebar(sections, selection: $selection)
+        }
     }
 }
 

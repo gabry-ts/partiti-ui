@@ -381,23 +381,45 @@ public struct Badge: View {
 // MARK: - Toggle, slider, pop-up
 
 /// The macOS switch, drawn in SwiftUI so it takes the app accent and renders everywhere,
-/// including offscreen snapshots where the AppKit switch does not. Disabled, the switch fades.
+/// including offscreen snapshots where the AppKit switch does not.
+/// The label is hidden by `labelsHidden()` on macOS 15 and later, or by `showsLabel: false`;
+/// either way it still names the switch for VoiceOver. Disabled, the switch fades.
 public struct PUISwitchStyle: ToggleStyle {
     var mini: Bool
+    var showsLabel: Bool
     @Environment(\.puiAccent) private var accent
     @Environment(\.colorScheme) private var scheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.isEnabled) private var isEnabled
 
-    /// `mini` is the smaller switch for popover rows.
-    public init(mini: Bool = false) { self.mini = mini }
+    /// `mini` is the smaller switch for popover rows. `showsLabel: false` hides the label
+    /// on every macOS version, where `labelsHidden()` needs macOS 15.
+    public init(mini: Bool = false, showsLabel: Bool = true) {
+        self.mini = mini
+        self.showsLabel = showsLabel
+    }
 
     public func makeBody(configuration: Configuration) -> some View {
+        Group {
+            if #available(macOS 15, *) {
+                LabelsVisibilityReader { visible in body(configuration, showsLabel: showsLabel && visible) }
+            } else {
+                body(configuration, showsLabel: showsLabel)
+            }
+        }
+        .opacity(isEnabled ? 1 : 0.5)
+        .accessibilityRepresentation {
+            Toggle(isOn: configuration.$isOn) { configuration.label }
+                .toggleStyle(.switch)
+        }
+    }
+
+    private func body(_ configuration: Configuration, showsLabel: Bool) -> some View {
         let w: CGFloat = mini ? 26 : 32
         let h: CGFloat = mini ? 15 : 18
         let on = configuration.isOn
-        HStack(spacing: PUI.Space.m) {
-            configuration.label
+        return HStack(spacing: PUI.Space.m) {
+            if showsLabel { configuration.label }
             Button {
                 withAnimation(PUI.Motion.spring(reduceMotion: reduceMotion)) { configuration.isOn.toggle() }
             } label: {
@@ -414,10 +436,17 @@ public struct PUISwitchStyle: ToggleStyle {
                 .contentShape(Capsule())
             }
             .buttonStyle(.plain)
-            .accessibilityValue(on ? Text("On") : Text("Off"))
         }
-        .opacity(isEnabled ? 1 : 0.5)
     }
+}
+
+/// Hands its content whether labels are visible, from `labelsHidden()` or `labelsVisibility(_:)`.
+@available(macOS 15, *)
+private struct LabelsVisibilityReader<Content: View>: View {
+    @Environment(\.labelsVisibility) private var visibility
+    @ViewBuilder let content: (Bool) -> Content
+
+    var body: some View { content(visibility != .hidden) }
 }
 
 /// A horizontal slider drawn in SwiftUI: accent fill, neutral track, white knob.

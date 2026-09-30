@@ -375,8 +375,7 @@ public struct AboutPane: View {
             SettingsGroup("Updates", footer: "\(brand.name) asks once, the first time it can check, whether to check automatically from then on.") {
                 SettingsRow("Automatically check for updates") {
                     Toggle("Automatically check for updates", isOn: $checksAutomatically)
-                        .toggleStyle(PUISwitchStyle())
-                        .labelsHidden()
+                        .toggleStyle(PUISwitchStyle(showsLabel: false))
                 }
                 SettingsRow("Check for updates now") {
                     Button("Check for Updates…", action: onCheckForUpdates)

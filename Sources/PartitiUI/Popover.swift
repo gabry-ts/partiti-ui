@@ -242,23 +242,27 @@ public struct PopoverFooter: View {
     let actions: [Action]
     let onSettings: () -> Void
     let onCheckForUpdates: () -> Void
+    let canCheckForUpdates: Bool
     let onBuyMeACoffee: () -> Void
     let onQuit: () -> Void
     let menuItems: AnyView?
     @Environment(\.puiGlassRendering) private var rendering
 
     /// Only the first two `actions` are shown, so the footer never wraps.
+    /// `canCheckForUpdates` false dims Check for Updates…, for example while a check runs.
     /// `onQuit` defaults to terminating the app. Disfavored, so that a trailing closure
     /// after the other arguments is the `menuItems` of the overload below, never `onQuit`.
     @_disfavoredOverload
     public init(actions: [Action] = [],
                 onSettings: @escaping () -> Void,
                 onCheckForUpdates: @escaping () -> Void,
+                canCheckForUpdates: Bool = true,
                 onBuyMeACoffee: @escaping () -> Void,
                 onQuit: @escaping () -> Void = { NSApplication.shared.terminate(nil) }) {
         self.actions = Array(actions.prefix(2))
         self.onSettings = onSettings
         self.onCheckForUpdates = onCheckForUpdates
+        self.canCheckForUpdates = canCheckForUpdates
         self.onBuyMeACoffee = onBuyMeACoffee
         self.onQuit = onQuit
         self.menuItems = nil
@@ -269,12 +273,14 @@ public struct PopoverFooter: View {
     public init<MenuItems: View>(actions: [Action] = [],
                                  onSettings: @escaping () -> Void,
                                  onCheckForUpdates: @escaping () -> Void,
+                                 canCheckForUpdates: Bool = true,
                                  onBuyMeACoffee: @escaping () -> Void,
                                  onQuit: @escaping () -> Void = { NSApplication.shared.terminate(nil) },
                                  @ViewBuilder menuItems: () -> MenuItems) {
         self.actions = Array(actions.prefix(2))
         self.onSettings = onSettings
         self.onCheckForUpdates = onCheckForUpdates
+        self.canCheckForUpdates = canCheckForUpdates
         self.onBuyMeACoffee = onBuyMeACoffee
         self.onQuit = onQuit
         self.menuItems = AnyView(menuItems())
@@ -305,6 +311,7 @@ public struct PopoverFooter: View {
                     Divider()
                 }
                 Button(action: onCheckForUpdates) { Text(pui: "Check for Updates…") }
+                    .disabled(!canCheckForUpdates)
                 Button(action: onBuyMeACoffee) { Text(pui: "Buy Me a Coffee…") }
             } label: {
                 FooterLabel(symbol: "ellipsis")

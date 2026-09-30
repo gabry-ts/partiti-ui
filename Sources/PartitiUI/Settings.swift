@@ -426,20 +426,24 @@ public struct AboutPane: View {
     let version: String
     @Binding var checksAutomatically: Bool
     let onCheckForUpdates: () -> Void
+    let canCheckForUpdates: Bool
     let onBuyMeACoffee: () -> Void
     @Environment(\.colorScheme) private var scheme
 
     /// `version` is shown as given, for example "Version 1.2 (34)".
     /// `checksAutomatically` is the updater's automatic-check setting.
+    /// `canCheckForUpdates` false dims the Check for Updates… button, for example while a check runs.
     public init(brand: PartitiBrand,
                 version: String,
                 checksAutomatically: Binding<Bool>,
                 onCheckForUpdates: @escaping () -> Void,
+                canCheckForUpdates: Bool = true,
                 onBuyMeACoffee: @escaping () -> Void) {
         self.brand = brand
         self.version = version
         self._checksAutomatically = checksAutomatically
         self.onCheckForUpdates = onCheckForUpdates
+        self.canCheckForUpdates = canCheckForUpdates
         self.onBuyMeACoffee = onBuyMeACoffee
     }
 
@@ -470,6 +474,7 @@ public struct AboutPane: View {
                 SettingsRow(Text(pui: "Check for updates now")) {
                     Button(action: onCheckForUpdates) { Text(pui: "Check for Updates…") }
                         .buttonStyle(SecondaryButtonStyle(height: PUI.Control.small))
+                        .disabled(!canCheckForUpdates)
                 }
             }
             .frame(maxWidth: 420)

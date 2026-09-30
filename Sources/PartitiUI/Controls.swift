@@ -66,6 +66,40 @@ public struct IconButton: View {
     }
 }
 
+/// A borderless icon that opens a menu, the `IconButton` look for use inside a `GlassCapsule`.
+/// Drawn as its symbol alone in `.painted` rendering, since menus don't render offscreen.
+public struct IconMenu<Items: View>: View {
+    let symbol: String
+    var active: Bool
+    let items: Items
+    @Environment(\.puiGlassRendering) private var rendering
+
+    /// `items` are the menu's content: buttons, toggles, pickers or submenus.
+    public init(_ symbol: String, active: Bool = false, @ViewBuilder items: () -> Items) {
+        self.symbol = symbol
+        self.active = active
+        self.items = items()
+    }
+
+    public var body: some View {
+        switch rendering {
+        case .live:
+            Menu {
+                items
+            } label: {
+                IconGlyph(symbol: symbol, active: active, width: 24)
+                    .contentShape(Rectangle())
+            }
+            .menuStyle(.button)
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
+            .fixedSize()
+        case .painted:
+            IconGlyph(symbol: symbol, active: active, width: 24)
+        }
+    }
+}
+
 /// A glass capsule grouping icon buttons, as on the right of a popover toolbar.
 public struct GlassCapsule<Content: View>: View {
     let content: Content

@@ -136,7 +136,7 @@ public struct FooterButton: View {
 
     public var body: some View {
         Button(action: action) {
-            FooterLabel(title: title, symbol: symbol, highlighted: highlighted || hovering)
+            FooterLabel(title.map { Text($0) }, symbol: symbol, highlighted: highlighted || hovering)
         }
         .buttonStyle(.plain)
         .onHover { inside in withAnimation(PUI.Motion.hover) { hovering = inside } }
@@ -144,19 +144,27 @@ public struct FooterButton: View {
     }
 }
 
-/// The look shared by footer buttons and the footer menu. Dims when disabled.
-struct FooterLabel: View {
-    let title: String?
+/// The look shared by footer buttons and the footer menu, for building a footer item
+/// that isn't a plain button, such as the label of a `Menu`. Dims when disabled.
+public struct FooterLabel: View {
+    let title: Text?
     let symbol: String
     let highlighted: Bool
     @Environment(\.colorScheme) private var scheme
     @Environment(\.isEnabled) private var isEnabled
 
-    var body: some View {
+    /// `title` nil draws the symbol alone; `highlighted` draws the hover look.
+    public init(_ title: Text? = nil, symbol: String, highlighted: Bool = false) {
+        self.title = title
+        self.symbol = symbol
+        self.highlighted = highlighted
+    }
+
+    public var body: some View {
         let ink = Ink(scheme)
         HStack(spacing: PUI.Space.xs + 1) {
             Image(systemName: symbol).font(.system(size: 11, weight: .medium))
-            if let title { Text(title).font(PUI.Font.callout) }
+            if let title { title.font(PUI.Font.callout) }
         }
         .foregroundStyle(!isEnabled ? ink.quaternary : (highlighted ? ink.primary : ink.secondary))
         .padding(.horizontal, PUI.Space.s + 1)
@@ -167,7 +175,7 @@ struct FooterLabel: View {
 }
 
 /// The standard footer, the same in every app: up to two app actions, Settings…,
-/// the ⋯ menu with Check for Updates… and Buy Me a Coffee…, then Quit.
+/// the ⋯ menu with the app's own items, Check for Updates… and Buy Me a Coffee…, then Quit.
 /// ⌘, and ⌘Q are bound here so every popover answers to them.
 public struct PopoverFooter: View {
     /// An app-specific footer action, such as Recordings or Statistics….
@@ -190,6 +198,7 @@ public struct PopoverFooter: View {
     let onCheckForUpdates: () -> Void
     let onBuyMeACoffee: () -> Void
     let onQuit: () -> Void
+    let menuItems: AnyView?
     @Environment(\.puiGlassRendering) private var rendering
 
     /// Only the first two `actions` are shown, so the footer never wraps.
@@ -204,6 +213,23 @@ public struct PopoverFooter: View {
         self.onCheckForUpdates = onCheckForUpdates
         self.onBuyMeACoffee = onBuyMeACoffee
         self.onQuit = onQuit
+        self.menuItems = nil
+    }
+
+    /// `menuItems` go at the top of the ⋯ menu, above a divider and the standard items:
+    /// buttons, toggles, pickers or submenus, as in any `Menu`.
+    public init<MenuItems: View>(actions: [Action] = [],
+                                 onSettings: @escaping () -> Void,
+                                 onCheckForUpdates: @escaping () -> Void,
+                                 onBuyMeACoffee: @escaping () -> Void,
+                                 onQuit: @escaping () -> Void = { NSApplication.shared.terminate(nil) },
+                                 @ViewBuilder menuItems: () -> MenuItems) {
+        self.actions = Array(actions.prefix(2))
+        self.onSettings = onSettings
+        self.onCheckForUpdates = onCheckForUpdates
+        self.onBuyMeACoffee = onBuyMeACoffee
+        self.onQuit = onQuit
+        self.menuItems = AnyView(menuItems())
     }
 
     public var body: some View {
@@ -226,10 +252,14 @@ public struct PopoverFooter: View {
         switch rendering {
         case .live:
             Menu {
+                if let menuItems {
+                    menuItems
+                    Divider()
+                }
                 Button("Check for Updates…", action: onCheckForUpdates)
                 Button("Buy Me a Coffee…", action: onBuyMeACoffee)
             } label: {
-                FooterLabel(title: nil, symbol: "ellipsis", highlighted: false)
+                FooterLabel(symbol: "ellipsis")
             }
             .menuStyle(.button)
             .buttonStyle(.plain)
@@ -237,7 +267,7 @@ public struct PopoverFooter: View {
             .fixedSize()
             .accessibilityLabel("More")
         case .painted:
-            FooterLabel(title: nil, symbol: "ellipsis", highlighted: false)
+            FooterLabel(symbol: "ellipsis")
         }
     }
 }

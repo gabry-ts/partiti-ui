@@ -144,12 +144,13 @@ public struct FooterButton: View {
     }
 }
 
-/// The look shared by footer buttons and the footer menu.
+/// The look shared by footer buttons and the footer menu. Dims when disabled.
 struct FooterLabel: View {
     let title: String?
     let symbol: String
     let highlighted: Bool
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.isEnabled) private var isEnabled
 
     var body: some View {
         let ink = Ink(scheme)
@@ -157,10 +158,10 @@ struct FooterLabel: View {
             Image(systemName: symbol).font(.system(size: 11, weight: .medium))
             if let title { Text(title).font(PUI.Font.callout) }
         }
-        .foregroundStyle(highlighted ? ink.primary : ink.secondary)
+        .foregroundStyle(!isEnabled ? ink.quaternary : (highlighted ? ink.primary : ink.secondary))
         .padding(.horizontal, PUI.Space.s + 1)
         .frame(height: PUI.Control.small + 2)
-        .puiHoverHighlight(highlighted)
+        .puiHoverHighlight(highlighted && isEnabled)
         .contentShape(Rectangle())
     }
 }

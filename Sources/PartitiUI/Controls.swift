@@ -2,13 +2,32 @@ import SwiftUI
 
 // MARK: - Round glass buttons
 
+/// The symbol of an icon control: 11 pt medium, in the legible accent when active,
+/// faded when disabled.
+struct IconGlyph: View {
+    let symbol: String
+    let active: Bool
+    let width: CGFloat
+    @Environment(\.puiAccent) private var accent
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
+        let ink = Ink(scheme)
+        Image(systemName: symbol)
+            .font(.system(size: PUI.Control.smallSymbol, weight: .medium))
+            .foregroundStyle(!isEnabled ? ink.quaternary : (active ? accent.legible(scheme) : ink.primary.opacity(0.78)))
+            .frame(width: width, height: PUI.Control.small)
+    }
+}
+
 /// A 22 pt round glass button with an 11 pt medium symbol. Active state is an accent wash.
 public struct GlassCircleButton: View {
     let symbol: String
     var active: Bool
     var action: () -> Void
     @Environment(\.puiAccent) private var accent
-    @Environment(\.colorScheme) private var scheme
+    @Environment(\.isEnabled) private var isEnabled
 
     public init(_ symbol: String, active: Bool = false, action: @escaping () -> Void) {
         self.symbol = symbol
@@ -18,14 +37,11 @@ public struct GlassCircleButton: View {
 
     public var body: some View {
         Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: PUI.Control.smallSymbol, weight: .medium))
-                .foregroundStyle(active ? accent.legible(scheme) : Ink(scheme).primary.opacity(0.78))
-                .frame(width: PUI.Control.small, height: PUI.Control.small)
+            IconGlyph(symbol: symbol, active: active, width: PUI.Control.small)
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
-        .puiGlass(Circle(), tint: active ? accent.color : nil)
+        .puiGlass(Circle(), tint: active && isEnabled ? accent.color : nil)
     }
 }
 
@@ -34,8 +50,6 @@ public struct IconButton: View {
     let symbol: String
     var active: Bool
     var action: () -> Void
-    @Environment(\.puiAccent) private var accent
-    @Environment(\.colorScheme) private var scheme
 
     public init(_ symbol: String, active: Bool = false, action: @escaping () -> Void) {
         self.symbol = symbol
@@ -45,10 +59,7 @@ public struct IconButton: View {
 
     public var body: some View {
         Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: PUI.Control.smallSymbol, weight: .medium))
-                .foregroundStyle(active ? accent.legible(scheme) : Ink(scheme).primary.opacity(0.78))
-                .frame(width: 24, height: PUI.Control.small)
+            IconGlyph(symbol: symbol, active: active, width: 24)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -124,11 +135,14 @@ public struct SegmentedPill<Value: Hashable>: View {
 
 /// The only solid fill in the system: the primary action, in the accent.
 /// Bright accents get a dark label so it stays readable; `color` overrides the accent.
+/// Disabled, it turns into a neutral fill with a faint label.
 public struct PrimaryButtonStyle: ButtonStyle {
     var height: CGFloat
     var fullWidth: Bool
     var color: Color?
     @Environment(\.puiAccent) private var accent
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.isEnabled) private var isEnabled
 
     public init(height: CGFloat = PUI.Control.large, fullWidth: Bool = true, color: Color? = nil) {
         self.height = height
@@ -137,8 +151,10 @@ public struct PrimaryButtonStyle: ButtonStyle {
     }
 
     public func makeBody(configuration: Configuration) -> some View {
+        let ink = Ink(scheme)
         let fill = color ?? accent.color
-        let labelColor: Color = (color == nil && accent.prefersDarkLabel) ? Color.black.opacity(0.82) : .white
+        let labelColor: Color = !isEnabled ? ink.tertiary
+            : ((color == nil && accent.prefersDarkLabel) ? Color.black.opacity(0.82) : .white)
         configuration.label
             .font(.system(size: height >= PUI.Control.large ? 13 : 12, weight: .semibold))
             .foregroundStyle(labelColor)
@@ -147,22 +163,28 @@ public struct PrimaryButtonStyle: ButtonStyle {
             .frame(height: height)
             .background {
                 let shape = RoundedRectangle(cornerRadius: PUI.Radius.group, style: .continuous)
-                ZStack {
-                    shape.fill(fill)
-                    shape.fill(LinearGradient(colors: [Color.white.opacity(0.22), .clear], startPoint: .top, endPoint: .bottom))
-                    shape.strokeBorder(Color.white.opacity(0.22), lineWidth: 0.5)
+                if isEnabled {
+                    ZStack {
+                        shape.fill(fill)
+                        shape.fill(LinearGradient(colors: [Color.white.opacity(0.22), .clear], startPoint: .top, endPoint: .bottom))
+                        shape.strokeBorder(Color.white.opacity(0.22), lineWidth: 0.5)
+                    }
+                    .shadow(color: fill.opacity(0.35), radius: 4, y: 2)
+                } else {
+                    shape.fill(ink.strongFill)
                 }
-                .shadow(color: fill.opacity(0.35), radius: 4, y: 2)
             }
             .opacity(configuration.isPressed ? 0.85 : 1)
     }
 }
 
 /// A neutral secondary button, 28 pt or 22 pt, sitting next to a primary one or in rows.
+/// Disabled, its label fades and the button sinks into the background.
 public struct SecondaryButtonStyle: ButtonStyle {
     var height: CGFloat
     var fullWidth: Bool
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.isEnabled) private var isEnabled
 
     public init(height: CGFloat = PUI.Control.regular, fullWidth: Bool = false) {
         self.height = height
@@ -174,7 +196,7 @@ public struct SecondaryButtonStyle: ButtonStyle {
         let shape = RoundedRectangle(cornerRadius: height >= PUI.Control.regular ? PUI.Radius.row : 6, style: .continuous)
         configuration.label
             .font(.system(size: height >= PUI.Control.regular ? 12 : 11, weight: .medium))
-            .foregroundStyle(ink.primary)
+            .foregroundStyle(isEnabled ? ink.primary : ink.tertiary)
             .padding(.horizontal, height >= PUI.Control.regular ? PUI.Space.l : PUI.Space.m)
             .frame(maxWidth: fullWidth ? .infinity : nil)
             .frame(height: height)
@@ -185,6 +207,7 @@ public struct SecondaryButtonStyle: ButtonStyle {
                     shape.inset(by: 0.5).strokeBorder(Color.white.opacity(scheme == .dark ? 0.08 : 0.6), lineWidth: 0.5)
                 }
                 .shadow(color: .black.opacity(scheme == .dark ? 0.2 : 0.06), radius: 1, y: 0.5)
+                .opacity(isEnabled ? 1 : 0.5)
             }
             .opacity(configuration.isPressed ? 0.85 : 1)
     }
@@ -195,6 +218,8 @@ public struct JoinButton: View {
     var title: String
     var action: () -> Void
     @Environment(\.puiAccent) private var accent
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.isEnabled) private var isEnabled
 
     public init(_ title: String = "Join", action: @escaping () -> Void) {
         self.title = title
@@ -202,20 +227,26 @@ public struct JoinButton: View {
     }
 
     public var body: some View {
+        let ink = Ink(scheme)
         Button(action: action) {
             Label(title, systemImage: "video.fill")
                 .labelStyle(TightLabelStyle(spacing: PUI.Space.xs))
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(accent.prefersDarkLabel ? Color.black.opacity(0.82) : .white)
+                .foregroundStyle(!isEnabled ? ink.tertiary : (accent.prefersDarkLabel ? Color.black.opacity(0.82) : .white))
                 .padding(.horizontal, PUI.Space.m + 2)
                 .frame(height: PUI.Control.small)
                 .background {
-                    ZStack {
-                        Capsule().fill(accent.color)
-                        Capsule().fill(LinearGradient(colors: [Color.white.opacity(0.25), .clear], startPoint: .top, endPoint: .bottom))
+                    if isEnabled {
+                        ZStack {
+                            Capsule().fill(accent.color)
+                            Capsule().fill(LinearGradient(colors: [Color.white.opacity(0.25), .clear], startPoint: .top, endPoint: .bottom))
+                        }
+                        .shadow(color: accent.color.opacity(0.4), radius: 3, y: 1)
+                    } else {
+                        Capsule().fill(ink.strongFill)
                     }
-                    .shadow(color: accent.color.opacity(0.4), radius: 3, y: 1)
                 }
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
     }
@@ -305,12 +336,13 @@ public struct Badge: View {
 // MARK: - Toggle, slider, pop-up
 
 /// The macOS switch, drawn in SwiftUI so it takes the app accent and renders everywhere,
-/// including offscreen snapshots where the AppKit switch does not.
+/// including offscreen snapshots where the AppKit switch does not. Disabled, the switch fades.
 public struct PUISwitchStyle: ToggleStyle {
     var mini: Bool
     @Environment(\.puiAccent) private var accent
     @Environment(\.colorScheme) private var scheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.isEnabled) private var isEnabled
 
     /// `mini` is the smaller switch for popover rows.
     public init(mini: Bool = false) { self.mini = mini }
@@ -339,17 +371,20 @@ public struct PUISwitchStyle: ToggleStyle {
             .buttonStyle(.plain)
             .accessibilityValue(on ? Text("On") : Text("Off"))
         }
+        .opacity(isEnabled ? 1 : 0.5)
     }
 }
 
 /// A horizontal slider drawn in SwiftUI: accent fill, neutral track, white knob.
 /// `ticks` draws that many evenly spaced marks under the track.
+/// Disabled, the fill turns neutral, the slider fades and ignores drags.
 public struct PUISlider: View {
     @Binding var value: Double
     var range: ClosedRange<Double>
     var ticks: Int
     @Environment(\.puiAccent) private var accent
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.isEnabled) private var isEnabled
 
     public init(value: Binding<Double>, in range: ClosedRange<Double> = 0...1, ticks: Int = 0) {
         self._value = value
@@ -365,7 +400,7 @@ public struct PUISlider: View {
             let x = max(geo.size.width - knob, 0) * f
             ZStack(alignment: .leading) {
                 Capsule().fill(ink.strongFill).frame(height: 4)
-                Capsule().fill(accent.color).frame(width: x + knob / 2, height: 4)
+                Capsule().fill(isEnabled ? accent.color : ink.tertiary).frame(width: x + knob / 2, height: 4)
                 if ticks > 1 {
                     HStack(spacing: 0) {
                         ForEach(0..<ticks, id: \.self) { i in
@@ -386,15 +421,18 @@ public struct PUISlider: View {
             .frame(height: geo.size.height)
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0).onChanged { drag in
+                guard isEnabled else { return }
                 let track = max(geo.size.width - knob, 1)
                 let f = min(max((drag.location.x - knob / 2) / track, 0), 1)
                 value = range.lowerBound + Double(f) * (range.upperBound - range.lowerBound)
             })
         }
         .frame(height: 18)
+        .opacity(isEnabled ? 1 : 0.6)
         .accessibilityElement()
         .accessibilityValue(Text(value, format: .number.precision(.fractionLength(0...2))))
         .accessibilityAdjustableAction { direction in
+            guard isEnabled else { return }
             let step = (range.upperBound - range.lowerBound) / 20
             switch direction {
             case .increment: value = min(value + step, range.upperBound)

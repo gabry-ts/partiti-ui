@@ -23,7 +23,7 @@ Add the package to `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/gabry-ts/partiti-ui", from: "0.1.0")
+    .package(url: "https://github.com/gabry-ts/partiti-ui", from: "0.2.0")
 ],
 targets: [
     .target(name: "MyApp", dependencies: [.product(name: "PartitiUI", package: "partiti-ui")])
@@ -61,7 +61,10 @@ struct MenuContent: View {
                 actions: [.init("Recordings", symbol: "list.bullet.rectangle") { showRecordings() }],
                 onSettings: { openSettings() },
                 onCheckForUpdates: { updater.checkForUpdates() },
-                onBuyMeACoffee: { openURL(coffeeURL) })
+                onBuyMeACoffee: { openURL(coffeeURL) }) {
+                // Optional: the app's own items at the top of the ⋯ menu.
+                Toggle("Show Transcripts", isOn: $showsTranscripts)
+            }
         }
         .puiAccent(.kaiku)
     }
@@ -72,26 +75,27 @@ The settings window is a floating sidebar and a pane. Give the window a full-siz
 
 ```swift
 struct SettingsView: View {
-    @State private var selection = "General"
+    @State private var selection = "general"
     @State private var checksAutomatically = true
     @State private var launchAtLogin = false
 
+    // Localized titles take a stable id, so the selection doesn't change with the language.
     let sections = [
         SidebarSection(nil, [
-            SidebarItem("General", symbol: "gearshape.fill", style: .tile(.gray)),
-            SidebarItem("Recording", symbol: "mic.fill", style: .tile(AppAccent.kaiku.color)),
-            SidebarItem("About", symbol: "info", style: .tile(.teal))
+            SidebarItem("General", id: "general", symbol: "gearshape.fill", style: .tile(.gray)),
+            SidebarItem("Recording", id: "recording", symbol: "mic.fill", style: .tile(AppAccent.kaiku.color)),
+            SidebarItem("About", id: "about", symbol: "info", style: .tile(.teal))
         ])
     ]
 
     var body: some View {
         SettingsWindow(sections: sections, selection: $selection) {
             switch selection {
-            case "About":
+            case "about":
                 AboutPane(
                     brand: PartitiBrand(accent: .kaiku,
-                                        tagline: "Record and transcribe your calls",
-                                        coffeeLine: "Kaiku is free. If it saves you some notes, you can buy me a coffee.",
+                                        tagline: String(localized: "Record and transcribe your calls"),
+                                        coffeeLine: String(localized: "Kaiku is free. If it saves you some notes, you can buy me a coffee."),
                                         icon: Image("AppIcon")),
                     version: "Version 1.2 (34)",
                     checksAutomatically: $checksAutomatically,
@@ -103,9 +107,9 @@ struct SettingsView: View {
                 } content: {
                     SettingsGroup("Startup") {
                         SettingsRow("Launch at login") {
+                            // The row shows the title; the switch keeps it for VoiceOver.
                             Toggle("Launch at login", isOn: $launchAtLogin)
-                                .toggleStyle(PUISwitchStyle())
-                                .labelsHidden()
+                                .toggleStyle(PUISwitchStyle(showsLabel: false))
                         }
                     }
                 }
@@ -177,15 +181,37 @@ Fixed sizes, because menu bar popovers don't follow Dynamic Type.
 | `badge` | 10 semibold caps, 6% tracking | Badges and counters |
 | `menuBar` | 13 medium, mono digits | Status item text |
 
+For a status item drawn in AppKit with an attributed title, `PUI.Font.menuBarNSFont(size:)` returns the same font as an `NSFont` (medium, monospaced digits, 13 pt unless an app offers a larger reading):
+
+```swift
+button.attributedTitle = NSAttributedString(string: "Tue 30 Sep 12:30",
+                                            attributes: [.font: PUI.Font.menuBarNSFont()])
+```
+
 ### Motion
 
-`PUI.Motion.spring(reduceMotion:)` for state changes (a short fade with Reduce Motion) and `PUI.Motion.hover` for hover feedback.
+`PUI.Motion.spring(reduceMotion:)` for state changes (a short fade with Reduce Motion) and `PUI.Motion.hover` for hover feedback. `SegmentedPill` slides its selection with the spring and only fades it with Reduce Motion.
 
 ## Components
 
-**Popover.** `PopoverScaffold`, `PopoverHeader`, `HeaderStatus`, `PopoverToolbar`, `PopoverFooter` (app actions, Settings…, the ⋯ menu with Check for Updates… and Buy Me a Coffee…, Quit, with ⌘, and ⌘Q), `FooterButton`, `Card`, `SectionHeader`, `Row`, `RowSymbol`, `EmptyState`.
+**Popover.** `PopoverScaffold`, `PopoverHeader`, `HeaderStatus`, `PopoverToolbar`, `PopoverFooter` (app actions, Settings…, the ⋯ menu with the app's own `menuItems`, Check for Updates… and Buy Me a Coffee…, Quit, with ⌘, and ⌘Q), `FooterButton`, `FooterLabel` (the footer look, for a footer built by hand or a menu label), `Card`, `SectionHeader`, `Row`, `RowSymbol`, `EmptyState`.
 
-**Controls.** `GlassCircleButton`, `GlassCapsule` with `IconButton`, `SegmentedPill`, `PrimaryButtonStyle`, `SecondaryButtonStyle`, `JoinButton`, `CoffeeButton`, `PUISwitchStyle`, `PUISlider`, `PopUpField`, `CheckMark`, `Chip`, `Badge`, `TightLabelStyle`.
+**Controls.** `GlassCircleButton`, `GlassCapsule` with `IconButton` and `IconMenu` (the same look, opening a menu), `SegmentedPill`, `PrimaryButtonStyle`, `SecondaryButtonStyle`, `JoinButton` (`.regular` 22 pt or `.compact` 18 pt), `CoffeeButton`, `PUISwitchStyle`, `PUISlider`, `PopUpField`, `CheckMark`, `Chip`, `Badge`, `TightLabelStyle`.
+
+```swift
+GlassCapsule {
+    IconButton("magnifyingglass") { search() }
+    IconMenu("plus") {
+        Button("New Event") { newEvent() }
+        Button("New Reminder") { newReminder() }
+    }
+    .disabled(!canCreate)
+}
+```
+
+Controls follow `.disabled(_:)`: `IconButton`, `IconMenu`, `GlassCircleButton`, `FooterButton`, `PrimaryButtonStyle`, `SecondaryButtonStyle`, `JoinButton`, `PUISwitchStyle` and `PUISlider` read `isEnabled` from the environment and draw a faded, neutral look, so apps don't dim them by hand.
+
+`PUISwitchStyle` hides its label with `labelsHidden()` on macOS 15 and later. On macOS 14, where the style can't read that setting, use `PUISwitchStyle(showsLabel: false)`, which works everywhere. Either way the label still names the switch for VoiceOver.
 
 **Data.** `Meter`, `GaugeRing`, `BigNumber`, `StatTile`.
 
@@ -198,6 +224,36 @@ Fixed sizes, because menu bar popovers don't follow Dynamic Type.
 Types that would clash with SwiftUI names carry a `PUI` prefix (`PUISwitchStyle`, `PUISlider`); modifiers added to `View` carry a `pui` prefix.
 
 ![The five status items](docs/images/menubar-light.png)
+
+## Localization
+
+Everything the library shows can be translated.
+
+**Your strings.** Components that take a title (`Row`, `SectionHeader`, `SettingsGroup`, `SettingsRow`, `PaneHeader`, `EmptyState`, `FooterButton`, `PopoverFooter.Action`, `SegmentedPill`, `Chip`, `Badge`, `HeaderStatus`, `StatTile`, `PopUpField`, `JoinButton`, `SidebarItem`, `SidebarSection`) follow SwiftUI's `Text` rules:
+
+- a string literal is a `LocalizedStringKey`, looked up in the app's own String Catalog (`Bundle.main`), so `SettingsRow("Launch at login")` is translated like `Text("Launch at login")`;
+- a `String` value is shown as given, so titles made with `String(localized:)` keep working;
+- a `Text` covers everything else, such as a catalog in another bundle (`Text("Title", bundle: .module)`) or a title and subtitle that mix both.
+
+A localized `SidebarItem` takes a stable `id`, the value the selection holds, so the selection doesn't change with the language. `PartitiBrand` takes the tagline and Coffee line as strings; pass them through `String(localized:)`.
+
+**Built-in strings.** Settings…, Quit, More, Check for Updates…, Buy Me a Coffee…, Join, and the Updates group of `AboutPane` come from the package's own String Catalog, in English and Italian. They follow the locale SwiftUI renders in, which comes from the app's own localizations: an app that ships only English shows them in English. Other languages fall back to English.
+
+### The resource bundle
+
+The built-in strings live in `PartitiUI_PartitiUI.bundle`, which SwiftPM builds next to the product.
+
+- **Xcode** copies it into the app's Contents/Resources. Nothing to do.
+- **An app assembled by a script** (`swift build`, then copying the binary into a `.app`) must copy the bundle into `Contents/Resources`, where codesign accepts it. It holds no code and is sealed by the app's own signature:
+
+  ```sh
+  BIN_DIR="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)"
+  ditto "$BIN_DIR/PartitiUI_PartitiUI.bundle" "MyApp.app/Contents/Resources/PartitiUI_PartitiUI.bundle"
+  ```
+
+Partiti UI finds the bundle itself, in Contents/Resources, at the app root or next to the executable, and never goes through SwiftPM's generated `Bundle.module`, which stops the app when its bundle is missing. So it needs no lookup redirect, and an app without the bundle doesn't crash: the built-in strings show in English. Other packages that do use `Bundle.module` (KeyboardShortcuts, for example) still need their bundles redirected from the app root to Contents/Resources, and a redirect that only rewrites missing paths leaves Partiti UI alone.
+
+The catalog is compiled into `.lproj` tables by Xcode and by SwiftPM's XCBuild path, which a multi-architecture build (`--arch arm64 --arch x86_64`) uses. A single-architecture `swift build` with the native build system copies the catalog as it is, and the built-in strings then show in English, so build releases for both architectures.
 
 ## Glass
 
@@ -222,6 +278,20 @@ swift run Mockups renders components menubar # only names containing these words
 ```
 
 The images in `docs/images` come from `components-*` and `menubar-*`.
+
+## What's new in 0.2.0
+
+- **Localization.** Titles accept `LocalizedStringKey`, `String` (shown as given) and `Text`; the built-in strings ship in English and Italian from the package's String Catalog, with a safe bundle lookup that falls back to English. See [Localization](#localization).
+- **`PopoverFooter` menu items.** A `menuItems` builder adds the app's own items at the top of the ⋯ menu. `FooterLabel` is public.
+- **`IconMenu`.** The `IconButton` look, opening a menu, for `GlassCapsule`.
+- **Disabled state.** Buttons, the switch and the slider draw a disabled look from the environment.
+- **`PUISwitchStyle`** honors `labelsHidden()` on macOS 15 and later and takes `showsLabel:` for every version; VoiceOver sees it as a system switch.
+- **`JoinButton`** takes `size: .regular` or `.compact`, and is titled Join, translated, by default.
+- **`SegmentedPill`** slides its selection again, with a hover highlight on the other segments, and fades it with Reduce Motion.
+- **`PUI.Font.menuBarNSFont(size:)`** and `PUI.Font.menuBarSize`, for status items drawn in AppKit.
+- **Fixes.** `SecondaryButtonStyle` shows a pressed state; `GaugeRing` clamps its gradient like its ring; `PUISlider` handles an empty range.
+
+Upgrading from 0.1.0 needs no code changes. Two things behave differently: string literals passed as titles are now looked up in the app's String Catalog, as in SwiftUI, and a `PopoverFooter.Action` or `SidebarItem` with a localized title takes its id from the symbol or from `id:`, rather than from the title. `SidebarItem.title` and `PopoverFooter.Action.title` hold that id for localized titles; the shown title is `label`. Apps that assemble their `.app` by hand should copy the new resource bundle.
 
 ## License
 

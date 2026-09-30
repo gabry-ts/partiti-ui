@@ -37,12 +37,12 @@ public struct IconTile: View {
 public struct PaneHeader<Trailing: View>: View {
     let symbol: String
     let color: Color
-    let title: String
-    let subtitle: String
+    let title: Text
+    let subtitle: Text
     let trailing: Trailing
     @Environment(\.colorScheme) private var scheme
 
-    public init(_ title: String, subtitle: String, symbol: String, color: Color, @ViewBuilder trailing: () -> Trailing) {
+    public init(_ title: Text, subtitle: Text, symbol: String, color: Color, @ViewBuilder trailing: () -> Trailing) {
         self.title = title
         self.subtitle = subtitle
         self.symbol = symbol
@@ -50,13 +50,25 @@ public struct PaneHeader<Trailing: View>: View {
         self.trailing = trailing()
     }
 
+    /// `title` and `subtitle` are looked up in the app's string catalog.
+    public init(_ title: LocalizedStringKey, subtitle: LocalizedStringKey, symbol: String, color: Color,
+                @ViewBuilder trailing: () -> Trailing) {
+        self.init(Text(title), subtitle: Text(subtitle), symbol: symbol, color: color, trailing: trailing)
+    }
+
+    /// `title` and `subtitle` are shown as given.
+    @_disfavoredOverload
+    public init(_ title: String, subtitle: String, symbol: String, color: Color, @ViewBuilder trailing: () -> Trailing) {
+        self.init(Text(verbatim: title), subtitle: Text(verbatim: subtitle), symbol: symbol, color: color, trailing: trailing)
+    }
+
     public var body: some View {
         let ink = Ink(scheme)
         HStack(spacing: PUI.Space.l) {
             IconTile(symbol, color: color, size: PUI.Window.paneTile)
             VStack(alignment: .leading, spacing: PUI.Space.xxs) {
-                Text(title).font(PUI.Font.paneTitle).foregroundStyle(ink.primary)
-                Text(subtitle).font(PUI.Font.callout).foregroundStyle(ink.secondary).lineLimit(2)
+                title.font(PUI.Font.paneTitle).foregroundStyle(ink.primary)
+                subtitle.font(PUI.Font.callout).foregroundStyle(ink.secondary).lineLimit(2)
             }
             Spacer(minLength: PUI.Space.l)
             trailing
@@ -65,6 +77,15 @@ public struct PaneHeader<Trailing: View>: View {
 }
 
 public extension PaneHeader where Trailing == EmptyView {
+    init(_ title: Text, subtitle: Text, symbol: String, color: Color) {
+        self.init(title, subtitle: subtitle, symbol: symbol, color: color) { EmptyView() }
+    }
+
+    init(_ title: LocalizedStringKey, subtitle: LocalizedStringKey, symbol: String, color: Color) {
+        self.init(title, subtitle: subtitle, symbol: symbol, color: color) { EmptyView() }
+    }
+
+    @_disfavoredOverload
     init(_ title: String, subtitle: String, symbol: String, color: Color) {
         self.init(title, subtitle: subtitle, symbol: symbol, color: color) { EmptyView() }
     }
@@ -76,12 +97,27 @@ public extension PaneHeader where Trailing == EmptyView {
 /// Each direct child of `content` is a row. Hairlines between rows need macOS 15;
 /// on macOS 14 the rows sit in the same group without them.
 public struct SettingsGroup<Content: View>: View {
-    var header: String?
-    var footer: String?
+    var header: Text?
+    var footer: Text?
     let content: Content
     @Environment(\.colorScheme) private var scheme
 
+    public init(_ header: Text, footer: Text? = nil, @ViewBuilder _ content: () -> Content) {
+        self.init(header: header, footer: footer, content)
+    }
+
+    /// `header` and `footer` are looked up in the app's string catalog.
+    public init(_ header: LocalizedStringKey? = nil, footer: LocalizedStringKey? = nil, @ViewBuilder _ content: () -> Content) {
+        self.init(header: header.map { Text($0) }, footer: footer.map { Text($0) }, content)
+    }
+
+    /// `header` and `footer` are shown as given.
+    @_disfavoredOverload
     public init(_ header: String? = nil, footer: String? = nil, @ViewBuilder _ content: () -> Content) {
+        self.init(header: header.map { Text(verbatim: $0) }, footer: footer.map { Text(verbatim: $0) }, content)
+    }
+
+    private init(header: Text?, footer: Text?, _ content: () -> Content) {
         self.header = header
         self.footer = footer
         self.content = content()
@@ -93,7 +129,7 @@ public struct SettingsGroup<Content: View>: View {
         let shape = RoundedRectangle(cornerRadius: PUI.Radius.group, style: .continuous)
         VStack(alignment: .leading, spacing: PUI.Space.s) {
             if let header {
-                Text(header).font(.system(size: 11, weight: .semibold)).foregroundStyle(ink.secondary)
+                header.font(.system(size: 11, weight: .semibold)).foregroundStyle(ink.secondary)
                     .padding(.leading, PUI.Space.xs)
             }
             VStack(spacing: 0) {
@@ -115,7 +151,7 @@ public struct SettingsGroup<Content: View>: View {
                 }
             }
             if let footer {
-                Text(footer)
+                footer
                     .font(PUI.Font.caption.leading(.standard))
                     .foregroundStyle(ink.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -127,24 +163,35 @@ public struct SettingsGroup<Content: View>: View {
 
 /// A settings row: title, optional subtitle, control on the right.
 public struct SettingsRow<Control: View>: View {
-    let title: String
-    var subtitle: String?
+    let title: Text
+    var subtitle: Text?
     let control: Control
     @Environment(\.colorScheme) private var scheme
 
-    public init(_ title: String, subtitle: String? = nil, @ViewBuilder control: () -> Control) {
+    public init(_ title: Text, subtitle: Text? = nil, @ViewBuilder control: () -> Control) {
         self.title = title
         self.subtitle = subtitle
         self.control = control()
+    }
+
+    /// `title` and `subtitle` are looked up in the app's string catalog.
+    public init(_ title: LocalizedStringKey, subtitle: LocalizedStringKey? = nil, @ViewBuilder control: () -> Control) {
+        self.init(Text(title), subtitle: subtitle.map { Text($0) }, control: control)
+    }
+
+    /// `title` and `subtitle` are shown as given.
+    @_disfavoredOverload
+    public init(_ title: String, subtitle: String? = nil, @ViewBuilder control: () -> Control) {
+        self.init(Text(verbatim: title), subtitle: subtitle.map { Text(verbatim: $0) }, control: control)
     }
 
     public var body: some View {
         let ink = Ink(scheme)
         HStack(spacing: PUI.Space.l) {
             VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(PUI.Font.body).foregroundStyle(ink.primary)
+                title.font(PUI.Font.body).foregroundStyle(ink.primary)
                 if let subtitle {
-                    Text(subtitle).font(PUI.Font.caption).foregroundStyle(ink.secondary)
+                    subtitle.font(PUI.Font.caption).foregroundStyle(ink.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -170,15 +217,35 @@ public struct SidebarItem: Identifiable, Sendable {
         case plain
     }
     public let id: String
+    /// The title as given, or the id for a localized title.
     public let title: String
+    /// What the sidebar shows.
+    public let label: Text
     public let symbol: String
     public let style: Style
     /// Marks the active user item (current mode or profile).
     public let checked: Bool
 
+    /// `title` is shown as given and doubles as the id.
     public init(_ title: String, symbol: String, style: Style, checked: Bool = false) {
-        self.id = title
-        self.title = title
+        self.init(id: title, label: Text(verbatim: title), symbol: symbol, style: style, checked: checked)
+    }
+
+    /// `title` is looked up in the app's string catalog. `id` is the stable value
+    /// the selection holds, the same in every language.
+    public init(_ title: LocalizedStringKey, id: String, symbol: String, style: Style, checked: Bool = false) {
+        self.init(id: id, label: Text(title), symbol: symbol, style: style, checked: checked)
+    }
+
+    /// `id` is the stable value the selection holds, the same in every language.
+    public init(_ title: Text, id: String, symbol: String, style: Style, checked: Bool = false) {
+        self.init(id: id, label: title, symbol: symbol, style: style, checked: checked)
+    }
+
+    private init(id: String, label: Text, symbol: String, style: Style, checked: Bool) {
+        self.id = id
+        self.title = id
+        self.label = label
         self.symbol = symbol
         self.style = style
         self.checked = checked
@@ -188,15 +255,37 @@ public struct SidebarItem: Identifiable, Sendable {
 /// A group of sidebar entries, with an optional title.
 public struct SidebarSection: Identifiable, Sendable {
     public let id: String
+    /// The title as given, or nil for a localized or untitled section.
     public let title: String?
+    /// What the sidebar shows above the items.
+    public let label: Text?
     public let items: [SidebarItem]
 
     /// The id is derived from the title, or from the items for an untitled section,
-    /// so it stays stable across updates.
+    /// so it stays stable across updates. `title` is shown as given.
+    @_disfavoredOverload
     public init(_ title: String?, _ items: [SidebarItem]) {
-        self.id = title ?? items.map(\.id).joined(separator: "|")
+        self.id = title ?? Self.itemsID(items)
         self.title = title
+        self.label = title.map { Text(verbatim: $0) }
         self.items = items
+    }
+
+    /// `title` is looked up in the app's string catalog; the id is derived from the items.
+    public init(_ title: LocalizedStringKey, _ items: [SidebarItem]) {
+        self.init(Text(title), items)
+    }
+
+    /// The id is derived from the items.
+    public init(_ title: Text, _ items: [SidebarItem]) {
+        self.id = Self.itemsID(items)
+        self.title = nil
+        self.label = title
+        self.items = items
+    }
+
+    private static func itemsID(_ items: [SidebarItem]) -> String {
+        items.map(\.id).joined(separator: "|")
     }
 }
 
@@ -221,8 +310,8 @@ public struct SettingsSidebar: View {
         VStack(alignment: .leading, spacing: PUI.Space.l) {
             ForEach(sections) { section in
                 VStack(alignment: .leading, spacing: 1) {
-                    if let title = section.title {
-                        Text(title).font(.system(size: 11, weight: .semibold)).foregroundStyle(ink.tertiary)
+                    if let label = section.label {
+                        label.font(.system(size: 11, weight: .semibold)).foregroundStyle(ink.tertiary)
                             .padding(.leading, PUI.Space.m + 2).padding(.bottom, PUI.Space.xs)
                     }
                     ForEach(section.items) { item in
@@ -255,7 +344,7 @@ public struct SettingsSidebar: View {
                     .foregroundStyle(on ? accent.legible(scheme) : ink.secondary)
                     .frame(width: PUI.Window.sidebarTile, height: PUI.Window.sidebarTile)
             }
-            Text(item.title).font(PUI.Font.body).foregroundStyle(ink.primary).lineLimit(1)
+            item.label.font(PUI.Font.body).foregroundStyle(ink.primary).lineLimit(1)
             Spacer(minLength: 0)
             if item.checked {
                 Image(systemName: "checkmark.circle.fill")
@@ -364,28 +453,29 @@ public struct AboutPane: View {
                 .frame(width: 96, height: 96)
                 .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
                 .accessibilityHidden(true)
-            Text(brand.name).font(PUI.Font.title).foregroundStyle(ink.primary)
+            Text(verbatim: brand.name).font(PUI.Font.title).foregroundStyle(ink.primary)
                 .padding(.top, PUI.Space.l)
-            Text(brand.tagline).font(PUI.Font.body).foregroundStyle(ink.secondary)
+            Text(verbatim: brand.tagline).font(PUI.Font.body).foregroundStyle(ink.secondary)
                 .padding(.top, PUI.Space.xxs)
-            Text(version).font(.system(size: 11)).monospacedDigit().foregroundStyle(ink.tertiary)
+            Text(verbatim: version).font(.system(size: 11)).monospacedDigit().foregroundStyle(ink.tertiary)
                 .padding(.top, PUI.Space.s)
                 .textSelection(.enabled)
 
-            SettingsGroup("Updates", footer: "\(brand.name) asks once, the first time it can check, whether to check automatically from then on.") {
-                SettingsRow("Automatically check for updates") {
-                    Toggle("Automatically check for updates", isOn: $checksAutomatically)
+            SettingsGroup(Text("Updates"),
+                          footer: Text("\(brand.name) asks once, the first time it can check, whether to check automatically from then on.")) {
+                SettingsRow(Text("Automatically check for updates")) {
+                    Toggle(isOn: $checksAutomatically) { Text("Automatically check for updates") }
                         .toggleStyle(PUISwitchStyle(showsLabel: false))
                 }
-                SettingsRow("Check for updates now") {
-                    Button("Check for Updates…", action: onCheckForUpdates)
+                SettingsRow(Text("Check for updates now")) {
+                    Button(action: onCheckForUpdates) { Text("Check for Updates…") }
                         .buttonStyle(SecondaryButtonStyle(height: PUI.Control.small))
                 }
             }
             .frame(maxWidth: 420)
             .padding(.top, PUI.Space.xxl)
 
-            Text(brand.coffeeLine)
+            Text(verbatim: brand.coffeeLine)
                 .font(PUI.Font.callout)
                 .foregroundStyle(ink.secondary)
                 .multilineTextAlignment(.center)

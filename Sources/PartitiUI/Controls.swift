@@ -120,7 +120,7 @@ public struct GlassCapsule<Content: View>: View {
 /// The selection slides between segments with the state spring, and fades in place
 /// with Reduce Motion.
 public struct SegmentedPill<Value: Hashable>: View {
-    let options: [(value: Value, title: String)]
+    let options: [(value: Value, title: Text)]
     @Binding var selection: Value
     var height: CGFloat
     var stretch: Bool
@@ -130,12 +130,25 @@ public struct SegmentedPill<Value: Hashable>: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// `stretch` spreads the segments over the available width.
-    public init(_ options: [(value: Value, title: String)], selection: Binding<Value>,
+    public init(_ options: [(value: Value, title: Text)], selection: Binding<Value>,
                 height: CGFloat = PUI.Control.small, stretch: Bool = false) {
         self.options = options
         self._selection = selection
         self.height = height
         self.stretch = stretch
+    }
+
+    /// Titles are looked up in the app's string catalog.
+    public init(_ options: [(value: Value, title: LocalizedStringKey)], selection: Binding<Value>,
+                height: CGFloat = PUI.Control.small, stretch: Bool = false) {
+        self.init(options.map { ($0.value, Text($0.title)) }, selection: selection, height: height, stretch: stretch)
+    }
+
+    /// Titles are shown as given.
+    @_disfavoredOverload
+    public init(_ options: [(value: Value, title: String)], selection: Binding<Value>,
+                height: CGFloat = PUI.Control.small, stretch: Bool = false) {
+        self.init(options.map { ($0.value, Text(verbatim: $0.title)) }, selection: selection, height: height, stretch: stretch)
     }
 
     public var body: some View {
@@ -145,7 +158,7 @@ public struct SegmentedPill<Value: Hashable>: View {
                 let option = options[i]
                 let on = option.value == selection
                 Button { selection = option.value } label: {
-                    Text(option.title)
+                    option.title
                         .font(.system(size: height > PUI.Control.small ? 12 : 11, weight: on ? .semibold : .medium))
                         .foregroundStyle(on ? ink.primary : ink.secondary)
                         .padding(.horizontal, PUI.Space.m + 2)
@@ -281,24 +294,40 @@ public struct JoinButton: View {
         case compact
     }
 
-    var title: String
+    var title: Text
     var size: Size
     var action: () -> Void
     @Environment(\.puiAccent) private var accent
     @Environment(\.colorScheme) private var scheme
     @Environment(\.isEnabled) private var isEnabled
 
-    public init(_ title: String = "Join", size: Size = .regular, action: @escaping () -> Void) {
+    /// Titled Join, translated by Partiti UI.
+    public init(size: Size = .regular, action: @escaping () -> Void) {
+        self.init(Text("Join"), size: size, action: action)
+    }
+
+    public init(_ title: Text, size: Size = .regular, action: @escaping () -> Void) {
         self.title = title
         self.size = size
         self.action = action
+    }
+
+    /// `title` is looked up in the app's string catalog.
+    public init(_ title: LocalizedStringKey, size: Size = .regular, action: @escaping () -> Void) {
+        self.init(Text(title), size: size, action: action)
+    }
+
+    /// `title` is shown as given.
+    @_disfavoredOverload
+    public init(_ title: String, size: Size = .regular, action: @escaping () -> Void) {
+        self.init(Text(verbatim: title), size: size, action: action)
     }
 
     public var body: some View {
         let compact = size == .compact
         let ink = Ink(scheme)
         Button(action: action) {
-            Label(title, systemImage: "video.fill")
+            Label { title } icon: { Image(systemName: "video.fill") }
                 .labelStyle(TightLabelStyle(spacing: compact ? 3 : PUI.Space.xs))
                 .font(.system(size: compact ? 10 : 11, weight: .semibold))
                 .foregroundStyle(!isEnabled ? ink.tertiary : (accent.prefersDarkLabel ? Color.black.opacity(0.82) : .white))
@@ -329,7 +358,7 @@ public struct CoffeeButton: View {
 
     public var body: some View {
         Button(action: action) {
-            Label("Buy Me a Coffee", systemImage: "cup.and.saucer.fill")
+            Label { Text("Buy Me a Coffee") } icon: { Image(systemName: "cup.and.saucer.fill") }
                 .labelStyle(TightLabelStyle(spacing: PUI.Space.s))
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Color(red: 0.24, green: 0.16, blue: 0.05))
@@ -376,22 +405,34 @@ public struct Badge: View {
         case neutral
     }
 
-    let text: String
+    let text: Text
     var color: Color?
     var style: Style
     @Environment(\.puiAccent) private var accent
     @Environment(\.colorScheme) private var scheme
 
-    public init(_ text: String, color: Color? = nil, style: Style = .tinted) {
+    public init(_ text: Text, color: Color? = nil, style: Style = .tinted) {
         self.text = text
         self.color = color
         self.style = style
     }
 
+    /// `text` is looked up in the app's string catalog.
+    public init(_ text: LocalizedStringKey, color: Color? = nil, style: Style = .tinted) {
+        self.init(Text(text), color: color, style: style)
+    }
+
+    /// `text` is shown as given.
+    @_disfavoredOverload
+    public init(_ text: String, color: Color? = nil, style: Style = .tinted) {
+        self.init(Text(verbatim: text), color: color, style: style)
+    }
+
     public var body: some View {
         let base = color ?? accent.color
         let ink = Ink(scheme)
-        Text(text.uppercased())
+        text
+            .textCase(.uppercase)
             .font(PUI.Font.badge)
             .tracking(PUI.Font.badgeTracking)
             .monospacedDigit()
@@ -551,13 +592,24 @@ public struct PUISlider: View {
 /// The look of a macOS pop-up button, with the value and the up-down chevrons.
 /// Use it as the label of a `Menu`, or on its own where the AppKit control can't draw.
 public struct PopUpField: View {
-    let value: String
+    let value: Text
     var symbol: String?
     @Environment(\.colorScheme) private var scheme
 
-    public init(_ value: String, symbol: String? = nil) {
+    public init(_ value: Text, symbol: String? = nil) {
         self.value = value
         self.symbol = symbol
+    }
+
+    /// `value` is looked up in the app's string catalog.
+    public init(_ value: LocalizedStringKey, symbol: String? = nil) {
+        self.init(Text(value), symbol: symbol)
+    }
+
+    /// `value` is shown as given.
+    @_disfavoredOverload
+    public init(_ value: String, symbol: String? = nil) {
+        self.init(Text(verbatim: value), symbol: symbol)
     }
 
     public var body: some View {
@@ -567,7 +619,7 @@ public struct PopUpField: View {
             if let symbol {
                 Image(systemName: symbol).font(.system(size: 11, weight: .medium)).foregroundStyle(ink.secondary)
             }
-            Text(value).font(PUI.Font.callout).foregroundStyle(ink.primary).lineLimit(1)
+            value.font(PUI.Font.callout).foregroundStyle(ink.primary).lineLimit(1)
             Image(systemName: "chevron.up.chevron.down")
                 .font(.system(size: 8, weight: .bold))
                 .foregroundStyle(ink.secondary)
@@ -617,18 +669,29 @@ public struct CheckMark: View {
 
 /// A selectable chip on a card, like Tuuli's fan modes. Active: accent wash and legible text.
 public struct Chip: View {
-    let title: String
+    let title: Text
     var symbol: String?
     var active: Bool
     var action: () -> Void
     @Environment(\.puiAccent) private var accent
     @Environment(\.colorScheme) private var scheme
 
-    public init(_ title: String, symbol: String? = nil, active: Bool = false, action: @escaping () -> Void) {
+    public init(_ title: Text, symbol: String? = nil, active: Bool = false, action: @escaping () -> Void) {
         self.title = title
         self.symbol = symbol
         self.active = active
         self.action = action
+    }
+
+    /// `title` is looked up in the app's string catalog.
+    public init(_ title: LocalizedStringKey, symbol: String? = nil, active: Bool = false, action: @escaping () -> Void) {
+        self.init(Text(title), symbol: symbol, active: active, action: action)
+    }
+
+    /// `title` is shown as given.
+    @_disfavoredOverload
+    public init(_ title: String, symbol: String? = nil, active: Bool = false, action: @escaping () -> Void) {
+        self.init(Text(verbatim: title), symbol: symbol, active: active, action: action)
     }
 
     public var body: some View {
@@ -641,7 +704,7 @@ public struct Chip: View {
                         .font(.system(size: 11, weight: .medium))
                         .frame(width: 14)
                 }
-                Text(title).font(.system(size: 12, weight: active ? .semibold : .regular)).lineLimit(1)
+                title.font(.system(size: 12, weight: active ? .semibold : .regular)).lineLimit(1)
                 Spacer(minLength: 0)
             }
             .foregroundStyle(active ? accent.legible(scheme) : ink.primary)

@@ -106,26 +106,37 @@ public struct BigNumber: View {
 
 /// A stat tile: label, value in `stat`, detail in caption.
 public struct StatTile: View {
-    let label: String
+    let label: Text
     let value: String
     var unit: String?
-    var detail: String?
+    var detail: Text?
     @Environment(\.colorScheme) private var scheme
 
-    public init(_ label: String, value: String, unit: String? = nil, detail: String? = nil) {
+    public init(_ label: Text, value: String, unit: String? = nil, detail: Text? = nil) {
         self.label = label
         self.value = value
         self.unit = unit
         self.detail = detail
     }
 
+    /// `label` and `detail` are looked up in the app's string catalog.
+    public init(_ label: LocalizedStringKey, value: String, unit: String? = nil, detail: LocalizedStringKey? = nil) {
+        self.init(Text(label), value: value, unit: unit, detail: detail.map { Text($0) })
+    }
+
+    /// `label` and `detail` are shown as given.
+    @_disfavoredOverload
+    public init(_ label: String, value: String, unit: String? = nil, detail: String? = nil) {
+        self.init(Text(verbatim: label), value: value, unit: unit, detail: detail.map { Text(verbatim: $0) })
+    }
+
     public var body: some View {
         let ink = Ink(scheme)
         VStack(alignment: .leading, spacing: PUI.Space.xxs) {
-            Text(label).font(PUI.Font.label).foregroundStyle(ink.secondary)
+            label.font(PUI.Font.label).foregroundStyle(ink.secondary)
             BigNumber(value, unit: unit, font: PUI.Font.stat, unitFont: .system(size: 12, weight: .medium, design: .rounded))
             if let detail {
-                Text(detail).font(PUI.Font.caption).foregroundStyle(ink.tertiary).monospacedDigit()
+                detail.font(PUI.Font.caption).foregroundStyle(ink.tertiary).monospacedDigit()
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

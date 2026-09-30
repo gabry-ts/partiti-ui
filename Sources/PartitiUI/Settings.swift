@@ -117,7 +117,7 @@ public struct SettingsGroup<Content: View>: View {
         self.init(header: header.map { Text(verbatim: $0) }, footer: footer.map { Text(verbatim: $0) }, content)
     }
 
-    private init(header: Text?, footer: Text?, _ content: () -> Content) {
+    init(header: Text?, footer: Text?, _ content: () -> Content) {
         self.header = header
         self.footer = footer
         self.content = content()

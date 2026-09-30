@@ -89,6 +89,28 @@
         }
       }
     },
+    "Move Down" : {
+      "comment" : "Moves a reorderable row one place down: a context menu item and a VoiceOver action.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sposta giù"
+          }
+        }
+      }
+    },
+    "Move Up" : {
+      "comment" : "Moves a reorderable row one place up: a context menu item and a VoiceOver action.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sposta su"
+          }
+        }
+      }
+    },
     "Quit" : {
       "comment" : "The popover footer button that quits the app.",
       "localizations" : {
@@ -96,6 +118,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Esci"
+          }
+        }
+      }
+    },
+    "Reorder" : {
+      "comment" : "The accessibility label of a reorderable row's drag handle.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Riordina"
           }
         }
       }

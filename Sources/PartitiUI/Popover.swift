@@ -283,11 +283,11 @@ public struct PopoverFooter: View {
             ForEach(actions) { a in
                 FooterButton(a.label, symbol: a.symbol, action: a.perform)
             }
-            FooterButton(Text("Settings…"), symbol: "gearshape", action: onSettings)
+            FooterButton(Text(pui: "Settings…"), symbol: "gearshape", action: onSettings)
                 .keyboardShortcut(",", modifiers: .command)
             moreMenu
             Spacer(minLength: 0)
-            FooterButton(Text("Quit"), symbol: "power", action: onQuit)
+            FooterButton(Text(pui: "Quit"), symbol: "power", action: onQuit)
                 .keyboardShortcut("q", modifiers: .command)
         }
         .padding(.horizontal, -PUI.Space.xxs)
@@ -302,8 +302,8 @@ public struct PopoverFooter: View {
                     menuItems
                     Divider()
                 }
-                Button(action: onCheckForUpdates) { Text("Check for Updates…") }
-                Button(action: onBuyMeACoffee) { Text("Buy Me a Coffee…") }
+                Button(action: onCheckForUpdates) { Text(pui: "Check for Updates…") }
+                Button(action: onBuyMeACoffee) { Text(pui: "Buy Me a Coffee…") }
             } label: {
                 FooterLabel(symbol: "ellipsis")
             }
@@ -311,8 +311,8 @@ public struct PopoverFooter: View {
             .buttonStyle(.plain)
             .menuIndicator(.hidden)
             .fixedSize()
-            .accessibilityLabel(Text("More"))
-            .help(Text("More"))
+            .accessibilityLabel(Text(pui: "More"))
+            .help(Text(pui: "More"))
         case .painted:
             FooterLabel(symbol: "ellipsis")
         }

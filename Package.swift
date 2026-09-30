@@ -3,12 +3,13 @@ import PackageDescription
 
 let package = Package(
     name: "PartitiUI",
+    defaultLocalization: "en",
     platforms: [.macOS(.v14)],
     products: [
         .library(name: "PartitiUI", targets: ["PartitiUI"])
     ],
     targets: [
-        .target(name: "PartitiUI"),
+        .target(name: "PartitiUI", resources: [.process("Resources")]),
         .executableTarget(
             name: "Mockups",
             dependencies: ["PartitiUI"],

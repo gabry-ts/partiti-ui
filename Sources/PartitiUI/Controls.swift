@@ -303,7 +303,7 @@ public struct JoinButton: View {
 
     /// Titled Join, translated by Partiti UI.
     public init(size: Size = .regular, action: @escaping () -> Void) {
-        self.init(Text("Join"), size: size, action: action)
+        self.init(Text(pui: "Join"), size: size, action: action)
     }
 
     public init(_ title: Text, size: Size = .regular, action: @escaping () -> Void) {
@@ -358,7 +358,7 @@ public struct CoffeeButton: View {
 
     public var body: some View {
         Button(action: action) {
-            Label { Text("Buy Me a Coffee") } icon: { Image(systemName: "cup.and.saucer.fill") }
+            Label { Text(pui: "Buy Me a Coffee") } icon: { Image(systemName: "cup.and.saucer.fill") }
                 .labelStyle(TightLabelStyle(spacing: PUI.Space.s))
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Color(red: 0.24, green: 0.16, blue: 0.05))

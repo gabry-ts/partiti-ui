@@ -461,14 +461,14 @@ public struct AboutPane: View {
                 .padding(.top, PUI.Space.s)
                 .textSelection(.enabled)
 
-            SettingsGroup(Text("Updates"),
-                          footer: Text("\(brand.name) asks once, the first time it can check, whether to check automatically from then on.")) {
-                SettingsRow(Text("Automatically check for updates")) {
-                    Toggle(isOn: $checksAutomatically) { Text("Automatically check for updates") }
+            SettingsGroup(Text(pui: "Updates"),
+                          footer: Text(pui: "\(brand.name) asks once, the first time it can check, whether to check automatically from then on.")) {
+                SettingsRow(Text(pui: "Automatically check for updates")) {
+                    Toggle(isOn: $checksAutomatically) { Text(pui: "Automatically check for updates") }
                         .toggleStyle(PUISwitchStyle(showsLabel: false))
                 }
-                SettingsRow(Text("Check for updates now")) {
-                    Button(action: onCheckForUpdates) { Text("Check for Updates…") }
+                SettingsRow(Text(pui: "Check for updates now")) {
+                    Button(action: onCheckForUpdates) { Text(pui: "Check for Updates…") }
                         .buttonStyle(SecondaryButtonStyle(height: PUI.Control.small))
                 }
             }

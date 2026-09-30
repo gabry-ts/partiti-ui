@@ -1,0 +1,127 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@ asks once, the first time it can check, whether to check automatically from then on." : {
+      "comment" : "The footer of the Updates group in About. The argument is the app name.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ lo chiede una sola volta, alla prima verifica possibile, se controllare automaticamente da quel momento in poi."
+          }
+        }
+      }
+    },
+    "Automatically check for updates" : {
+      "comment" : "A settings row in About.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controlla automaticamente gli aggiornamenti"
+          }
+        }
+      }
+    },
+    "Buy Me a Coffee" : {
+      "comment" : "The Coffee capsule in About.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Offrimi un caffè"
+          }
+        }
+      }
+    },
+    "Buy Me a Coffee…" : {
+      "comment" : "An item in the popover footer's More menu.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Offrimi un caffè…"
+          }
+        }
+      }
+    },
+    "Check for Updates…" : {
+      "comment" : "An item in the popover footer's More menu, and the button in About.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controlla aggiornamenti…"
+          }
+        }
+      }
+    },
+    "Check for updates now" : {
+      "comment" : "A settings row in About.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controlla ora gli aggiornamenti"
+          }
+        }
+      }
+    },
+    "Join" : {
+      "comment" : "The button that joins a call.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Partecipa"
+          }
+        }
+      }
+    },
+    "More" : {
+      "comment" : "The accessibility label of the popover footer's ⋯ menu.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Altro"
+          }
+        }
+      }
+    },
+    "Quit" : {
+      "comment" : "The popover footer button that quits the app.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esci"
+          }
+        }
+      }
+    },
+    "Settings…" : {
+      "comment" : "The popover footer button that opens the settings.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impostazioni…"
+          }
+        }
+      }
+    },
+    "Updates" : {
+      "comment" : "The header of the Updates group in About.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiornamenti"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

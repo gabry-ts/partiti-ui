@@ -361,8 +361,8 @@ public struct PUISlider: View {
         let ink = Ink(scheme)
         GeometryReader { geo in
             let knob: CGFloat = 16
-            let f = CGFloat((value - range.lowerBound) / (range.upperBound - range.lowerBound))
-            let x = (geo.size.width - knob) * min(max(f, 0), 1)
+            let f = CGFloat(fraction)
+            let x = max(geo.size.width - knob, 0) * f
             ZStack(alignment: .leading) {
                 Capsule().fill(ink.strongFill).frame(height: 4)
                 Capsule().fill(accent.color).frame(width: x + knob / 2, height: 4)
@@ -402,6 +402,13 @@ public struct PUISlider: View {
             @unknown default: break
             }
         }
+    }
+
+    /// Where `value` sits in `range`, 0...1. An empty range reads as the start.
+    private var fraction: Double {
+        let span = range.upperBound - range.lowerBound
+        guard span > 0 else { return 0 }
+        return min(max((value - range.lowerBound) / span, 0), 1)
     }
 }
 

@@ -214,6 +214,45 @@ public struct SettingsRow<Control: View>: View {
     }
 }
 
+/// A settings row with a switch on the right. The title names the switch for VoiceOver.
+public struct SwitchRow: View {
+    let title: Text
+    var subtitle: Text?
+    var symbol: String?
+    var symbolColor: Color?
+    @Binding var isOn: Bool
+
+    public init(_ title: Text, subtitle: Text? = nil, symbol: String? = nil, symbolColor: Color? = nil,
+                isOn: Binding<Bool>) {
+        self.title = title
+        self.subtitle = subtitle
+        self.symbol = symbol
+        self.symbolColor = symbolColor
+        self._isOn = isOn
+    }
+
+    /// `title` and `subtitle` are looked up in the app's string catalog.
+    public init(_ title: LocalizedStringKey, subtitle: LocalizedStringKey? = nil,
+                symbol: String? = nil, symbolColor: Color? = nil, isOn: Binding<Bool>) {
+        self.init(Text(title), subtitle: subtitle.map { Text($0) }, symbol: symbol, symbolColor: symbolColor, isOn: isOn)
+    }
+
+    /// `title` and `subtitle` are shown as given.
+    @_disfavoredOverload
+    public init(_ title: String, subtitle: String? = nil,
+                symbol: String? = nil, symbolColor: Color? = nil, isOn: Binding<Bool>) {
+        self.init(Text(verbatim: title), subtitle: subtitle.map { Text(verbatim: $0) },
+                  symbol: symbol, symbolColor: symbolColor, isOn: isOn)
+    }
+
+    public var body: some View {
+        SettingsRow(title, subtitle: subtitle, symbol: symbol, symbolColor: symbolColor) {
+            Toggle(isOn: $isOn) { title }
+                .toggleStyle(PUISwitchStyle(showsLabel: false))
+        }
+    }
+}
+
 // MARK: - Sidebar
 
 /// One sidebar entry. Fixed panes use a colored tile; user-made items use a plain symbol.
@@ -479,10 +518,7 @@ public struct AboutPane: View {
 
             SettingsGroup(Text(pui: "Updates"),
                           footer: Text(pui: "\(brand.name) asks once, the first time it can check, whether to check automatically from then on.")) {
-                SettingsRow(Text(pui: "Automatically check for updates")) {
-                    Toggle(isOn: $checksAutomatically) { Text(pui: "Automatically check for updates") }
-                        .toggleStyle(PUISwitchStyle(showsLabel: false))
-                }
+                SwitchRow(Text(pui: "Automatically check for updates"), isOn: $checksAutomatically)
                 SettingsRow(Text(pui: "Check for updates now")) {
                     Button(action: onCheckForUpdates) { Text(pui: "Check for Updates…") }
                         .buttonStyle(SecondaryButtonStyle(height: PUI.Control.small))

@@ -8,6 +8,11 @@ let package = Package(
         .library(name: "PartitiUI", targets: ["PartitiUI"])
     ],
     targets: [
-        .target(name: "PartitiUI")
+        .target(name: "PartitiUI"),
+        .executableTarget(
+            name: "Mockups",
+            dependencies: ["PartitiUI"],
+            resources: [.copy("Icons")]
+        )
     ]
 )

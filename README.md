@@ -44,7 +44,7 @@ Popover pieces (`PopoverScaffold`, `PopoverHeader`, `PopoverFooter`, `Card`, `Ro
 
 `ReorderableGroup` lets users choose what is shown and drag it into order, with `Reorder` for the move logic and for fitting a saved order to the items an app knows.
 New `SwitchRow`, `ValueText` and `PopUpMenu`; `PUISlider` takes a `step` and `onEditingChanged`, `SettingsRow` a leading symbol, sidebar entries a context menu, footer actions a keyboard shortcut.
-A trailing closure on `PopoverFooter` is now the menu items, `SettingsWindow` extends under the title bar by itself, and Check for Updates… can be disabled.
+A trailing closure on `PopoverFooter` is now the menu items, `SettingsWindow` extends under the title bar by itself, and Check for Updates… can be disabled. Call `window.puiConfigureForSettings()` on the window that hosts it, so the traffic lights sit inside the sidebar.
 
 ## License
 

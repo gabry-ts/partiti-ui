@@ -515,20 +515,29 @@ private struct LabelsVisibilityReader<Content: View>: View {
 }
 
 /// A horizontal slider drawn in SwiftUI: accent fill, neutral track, white knob.
+/// `step` snaps the value to multiples of it from the start of the range;
 /// `ticks` draws that many evenly spaced marks under the track.
 /// Disabled, the fill turns neutral, the slider fades and ignores drags.
 public struct PUISlider: View {
     @Binding var value: Double
     var range: ClosedRange<Double>
+    var step: Double?
     var ticks: Int
+    var onEditingChanged: (Bool) -> Void
+    @State private var editing = false
     @Environment(\.puiAccent) private var accent
     @Environment(\.colorScheme) private var scheme
     @Environment(\.isEnabled) private var isEnabled
 
-    public init(value: Binding<Double>, in range: ClosedRange<Double> = 0...1, ticks: Int = 0) {
+    /// `onEditingChanged` is called with true when a drag starts and false when it ends,
+    /// for work that should wait until the user lets go.
+    public init(value: Binding<Double>, in range: ClosedRange<Double> = 0...1, step: Double? = nil, ticks: Int = 0,
+                onEditingChanged: @escaping (Bool) -> Void = { _ in }) {
         self._value = value
         self.range = range
+        self.step = step
         self.ticks = ticks
+        self.onEditingChanged = onEditingChanged
     }
 
     public var body: some View {
@@ -561,9 +570,17 @@ public struct PUISlider: View {
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0).onChanged { drag in
                 guard isEnabled else { return }
+                if !editing {
+                    editing = true
+                    onEditingChanged(true)
+                }
                 let track = max(geo.size.width - knob, 1)
                 let f = min(max((drag.location.x - knob / 2) / track, 0), 1)
-                value = range.lowerBound + Double(f) * (range.upperBound - range.lowerBound)
+                value = Self.snapped(range.lowerBound + Double(f) * (range.upperBound - range.lowerBound), in: range, step: step)
+            }.onEnded { _ in
+                guard editing else { return }
+                editing = false
+                onEditingChanged(false)
             })
         }
         .frame(height: 18)
@@ -572,13 +589,23 @@ public struct PUISlider: View {
         .accessibilityValue(Text(value, format: .number.precision(.fractionLength(0...2))))
         .accessibilityAdjustableAction { direction in
             guard isEnabled else { return }
-            let step = (range.upperBound - range.lowerBound) / 20
+            let step = step ?? (range.upperBound - range.lowerBound) / 20
             switch direction {
-            case .increment: value = min(value + step, range.upperBound)
-            case .decrement: value = max(value - step, range.lowerBound)
-            @unknown default: break
+            case .increment: value = Self.snapped(value + step, in: range, step: self.step)
+            case .decrement: value = Self.snapped(value - step, in: range, step: self.step)
+            @unknown default: return
             }
+            onEditingChanged(false)
         }
+    }
+
+    /// `value` kept inside `range` and, with a `step`, moved to the nearest multiple of it
+    /// counted from the start of the range.
+    nonisolated static func snapped(_ value: Double, in range: ClosedRange<Double>, step: Double?) -> Double {
+        let clamped = min(max(value, range.lowerBound), range.upperBound)
+        guard let step, step > 0 else { return clamped }
+        let snapped = range.lowerBound + ((clamped - range.lowerBound) / step).rounded() * step
+        return min(snapped, range.upperBound)
     }
 
     /// Where `value` sits in `range`, 0...1. An empty range reads as the start.

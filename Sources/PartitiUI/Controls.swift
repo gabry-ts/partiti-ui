@@ -651,11 +651,13 @@ public struct ValueText: View {
 }
 
 /// The look of a macOS pop-up button, with the value and the up-down chevrons.
-/// Use it as the label of a `Menu`, or on its own where the AppKit control can't draw.
+/// Use it as the label of a `Menu`, or on its own where the AppKit control can't draw;
+/// `PopUpMenu` is the two together. Disabled, it fades.
 public struct PopUpField: View {
     let value: Text
     var symbol: String?
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.isEnabled) private var isEnabled
 
     public init(_ value: Text, symbol: String? = nil) {
         self.value = value
@@ -695,6 +697,98 @@ public struct PopUpField: View {
             }
             .shadow(color: .black.opacity(scheme == .dark ? 0.2 : 0.06), radius: 0.8, y: 0.5)
         }
+        .opacity(isEnabled ? 1 : 0.5)
+    }
+}
+
+/// A pop-up button: a menu opened from a `PopUpField` showing the current value.
+/// Drawn as the field alone in `.painted` rendering, since menus don't render offscreen.
+public struct PopUpMenu<Items: View>: View {
+    let value: Text
+    var symbol: String?
+    let items: Items
+    @Environment(\.puiGlassRendering) private var rendering
+
+    /// `items` are the menu's content: buttons, toggles, pickers or submenus.
+    public init(_ value: Text, symbol: String? = nil, @ViewBuilder items: () -> Items) {
+        self.value = value
+        self.symbol = symbol
+        self.items = items()
+    }
+
+    /// `value` is looked up in the app's string catalog.
+    public init(_ value: LocalizedStringKey, symbol: String? = nil, @ViewBuilder items: () -> Items) {
+        self.init(Text(value), symbol: symbol, items: items)
+    }
+
+    /// `value` is shown as given.
+    @_disfavoredOverload
+    public init(_ value: String, symbol: String? = nil, @ViewBuilder items: () -> Items) {
+        self.init(Text(verbatim: value), symbol: symbol, items: items)
+    }
+
+    public var body: some View {
+        switch rendering {
+        case .live:
+            Menu {
+                items
+            } label: {
+                PopUpField(value, symbol: symbol)
+            }
+            .menuStyle(.button)
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
+            .fixedSize()
+        case .painted:
+            PopUpField(value, symbol: symbol)
+        }
+    }
+}
+
+public extension PopUpMenu {
+    /// A pop-up button that picks one of `options`: the field shows the selected title,
+    /// the menu lists them all with a checkmark on the selected one.
+    init<Value: Hashable>(selection: Binding<Value>, options: [(value: Value, title: Text)], symbol: String? = nil)
+    where Items == PopUpOptions<Value> {
+        let selected = options.first { $0.value == selection.wrappedValue }?.title ?? Text(verbatim: "")
+        self.init(selected, symbol: symbol) { PopUpOptions(options, selection: selection) }
+    }
+
+    /// Titles are looked up in the app's string catalog.
+    init<Value: Hashable>(selection: Binding<Value>, options: [(value: Value, title: LocalizedStringKey)], symbol: String? = nil)
+    where Items == PopUpOptions<Value> {
+        self.init(selection: selection, options: options.map { ($0.value, Text($0.title)) }, symbol: symbol)
+    }
+
+    /// Titles are shown as given.
+    @_disfavoredOverload
+    init<Value: Hashable>(selection: Binding<Value>, options: [(value: Value, title: String)], symbol: String? = nil)
+    where Items == PopUpOptions<Value> {
+        self.init(selection: selection, options: options.map { ($0.value, Text(verbatim: $0.title)) }, symbol: symbol)
+    }
+}
+
+/// The options of a selection `PopUpMenu`, as an inline picker: usable in any `Menu`
+/// for a group of choices with a checkmark on the selected one.
+public struct PopUpOptions<Value: Hashable>: View {
+    let options: [(value: Value, title: Text)]
+    @Binding var selection: Value
+
+    public init(_ options: [(value: Value, title: Text)], selection: Binding<Value>) {
+        self.options = options
+        self._selection = selection
+    }
+
+    public var body: some View {
+        Picker(selection: $selection) {
+            ForEach(options.indices, id: \.self) { i in
+                options[i].title.tag(options[i].value)
+            }
+        } label: {
+            EmptyView()
+        }
+        .pickerStyle(.inline)
+        .labelsHidden()
     }
 }
 

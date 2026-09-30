@@ -57,11 +57,12 @@ public struct GaugeRing<Center: View>: View {
 
     public var body: some View {
         let c = color ?? accent.color
+        let f = min(max(value, 0), 1)
         ZStack {
             Circle().stroke(scheme == .dark ? Color.white.opacity(0.10) : Color.black.opacity(0.07), lineWidth: lineWidth)
             Circle()
-                .trim(from: 0, to: min(max(value, 0), 1))
-                .stroke(AngularGradient(colors: [c.opacity(0.75), c], center: .center, startAngle: .degrees(0), endAngle: .degrees(360 * value)),
+                .trim(from: 0, to: f)
+                .stroke(AngularGradient(colors: [c.opacity(0.75), c], center: .center, startAngle: .degrees(0), endAngle: .degrees(360 * f)),
                         style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
                 .rotationEffect(.degrees(-90))
             center

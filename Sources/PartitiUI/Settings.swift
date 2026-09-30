@@ -161,33 +161,43 @@ public struct SettingsGroup<Content: View>: View {
     }
 }
 
-/// A settings row: title, optional subtitle, control on the right.
+/// A settings row: optional leading symbol, title, optional subtitle, control on the right.
 public struct SettingsRow<Control: View>: View {
     let title: Text
     var subtitle: Text?
+    var symbol: String?
+    var symbolColor: Color?
     let control: Control
     @Environment(\.colorScheme) private var scheme
 
-    public init(_ title: Text, subtitle: Text? = nil, @ViewBuilder control: () -> Control) {
+    /// `symbol` is drawn before the title, in `symbolColor` or the secondary ink.
+    public init(_ title: Text, subtitle: Text? = nil, symbol: String? = nil, symbolColor: Color? = nil,
+                @ViewBuilder control: () -> Control) {
         self.title = title
         self.subtitle = subtitle
+        self.symbol = symbol
+        self.symbolColor = symbolColor
         self.control = control()
     }
 
     /// `title` and `subtitle` are looked up in the app's string catalog.
-    public init(_ title: LocalizedStringKey, subtitle: LocalizedStringKey? = nil, @ViewBuilder control: () -> Control) {
-        self.init(Text(title), subtitle: subtitle.map { Text($0) }, control: control)
+    public init(_ title: LocalizedStringKey, subtitle: LocalizedStringKey? = nil,
+                symbol: String? = nil, symbolColor: Color? = nil, @ViewBuilder control: () -> Control) {
+        self.init(Text(title), subtitle: subtitle.map { Text($0) }, symbol: symbol, symbolColor: symbolColor, control: control)
     }
 
     /// `title` and `subtitle` are shown as given.
     @_disfavoredOverload
-    public init(_ title: String, subtitle: String? = nil, @ViewBuilder control: () -> Control) {
-        self.init(Text(verbatim: title), subtitle: subtitle.map { Text(verbatim: $0) }, control: control)
+    public init(_ title: String, subtitle: String? = nil,
+                symbol: String? = nil, symbolColor: Color? = nil, @ViewBuilder control: () -> Control) {
+        self.init(Text(verbatim: title), subtitle: subtitle.map { Text(verbatim: $0) },
+                  symbol: symbol, symbolColor: symbolColor, control: control)
     }
 
     public var body: some View {
         let ink = Ink(scheme)
         HStack(spacing: PUI.Space.l) {
+            if let symbol { RowSymbol(symbol, color: symbolColor).padding(.trailing, -PUI.Space.xxs) }
             VStack(alignment: .leading, spacing: 1) {
                 title.font(PUI.Font.body).foregroundStyle(ink.primary)
                 if let subtitle {

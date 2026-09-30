@@ -212,29 +212,34 @@ public struct PopoverFooter: View {
         /// What the footer shows.
         public let label: Text
         public let symbol: String
+        /// The keys that trigger the action while the popover is open.
+        public let shortcut: KeyboardShortcut?
         public let perform: () -> Void
 
         /// `title` is shown as given and doubles as the id.
         @_disfavoredOverload
-        public init(_ title: String, symbol: String, perform: @escaping () -> Void) {
-            self.init(id: title, label: Text(verbatim: title), symbol: symbol, perform: perform)
+        public init(_ title: String, symbol: String, shortcut: KeyboardShortcut? = nil, perform: @escaping () -> Void) {
+            self.init(id: title, label: Text(verbatim: title), symbol: symbol, shortcut: shortcut, perform: perform)
         }
 
         /// `title` is looked up in the app's string catalog; `id` defaults to the symbol.
-        public init(_ title: LocalizedStringKey, id: String? = nil, symbol: String, perform: @escaping () -> Void) {
-            self.init(id: id ?? symbol, label: Text(title), symbol: symbol, perform: perform)
+        public init(_ title: LocalizedStringKey, id: String? = nil, symbol: String,
+                    shortcut: KeyboardShortcut? = nil, perform: @escaping () -> Void) {
+            self.init(id: id ?? symbol, label: Text(title), symbol: symbol, shortcut: shortcut, perform: perform)
         }
 
         /// `id` defaults to the symbol.
-        public init(_ title: Text, id: String? = nil, symbol: String, perform: @escaping () -> Void) {
-            self.init(id: id ?? symbol, label: title, symbol: symbol, perform: perform)
+        public init(_ title: Text, id: String? = nil, symbol: String,
+                    shortcut: KeyboardShortcut? = nil, perform: @escaping () -> Void) {
+            self.init(id: id ?? symbol, label: title, symbol: symbol, shortcut: shortcut, perform: perform)
         }
 
-        private init(id: String, label: Text, symbol: String, perform: @escaping () -> Void) {
+        private init(id: String, label: Text, symbol: String, shortcut: KeyboardShortcut?, perform: @escaping () -> Void) {
             self.id = id
             self.title = id
             self.label = label
             self.symbol = symbol
+            self.shortcut = shortcut
             self.perform = perform
         }
     }
@@ -290,6 +295,7 @@ public struct PopoverFooter: View {
         HStack(spacing: 0) {
             ForEach(actions) { a in
                 FooterButton(a.label, symbol: a.symbol, action: a.perform)
+                    .keyboardShortcut(a.shortcut)
             }
             FooterButton(Text(pui: "Settings…"), symbol: "gearshape", action: onSettings)
                 .keyboardShortcut(",", modifiers: .command)

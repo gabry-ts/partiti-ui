@@ -47,6 +47,13 @@ import Testing
         #expect(quit)
     }
 
+    @Test func actionsCarryTheirShortcut() {
+        let plain = PopoverFooter.Action("Recordings", symbol: "folder", perform: {})
+        #expect(plain.shortcut == nil)
+        let keyed = PopoverFooter.Action("Recordings", symbol: "folder", shortcut: KeyboardShortcut("r"), perform: {})
+        #expect(keyed.shortcut == KeyboardShortcut("r", modifiers: .command))
+    }
+
     @Test func onlyTwoActionsAreShown() {
         let actions = (["a", "b", "c"] as [String]).map { PopoverFooter.Action($0, symbol: "circle", perform: {}) }
         let footer = PopoverFooter(actions: actions, onSettings: {}, onCheckForUpdates: {}, onBuyMeACoffee: {})

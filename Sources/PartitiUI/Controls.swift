@@ -186,6 +186,7 @@ public struct SecondaryButtonStyle: ButtonStyle {
                 }
                 .shadow(color: .black.opacity(scheme == .dark ? 0.2 : 0.06), radius: 1, y: 0.5)
             }
+            .opacity(configuration.isPressed ? 0.85 : 1)
     }
 }
 

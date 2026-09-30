@@ -616,6 +616,40 @@ public struct PUISlider: View {
     }
 }
 
+/// The value next to a slider or at the end of a row: secondary ink with monospaced
+/// digits, so it holds still while it changes. `width` reserves room for the longest
+/// value, trailing-aligned.
+public struct ValueText: View {
+    let text: Text
+    var width: CGFloat?
+    @Environment(\.colorScheme) private var scheme
+
+    public init(_ text: Text, width: CGFloat? = nil) {
+        self.text = text
+        self.width = width
+    }
+
+    /// `text` is looked up in the app's string catalog.
+    public init(_ text: LocalizedStringKey, width: CGFloat? = nil) {
+        self.init(Text(text), width: width)
+    }
+
+    /// `text` is shown as given.
+    @_disfavoredOverload
+    public init(_ text: String, width: CGFloat? = nil) {
+        self.init(Text(verbatim: text), width: width)
+    }
+
+    public var body: some View {
+        text
+            .font(PUI.Font.body)
+            .monospacedDigit()
+            .foregroundStyle(Ink(scheme).secondary)
+            .lineLimit(1)
+            .frame(width: width, alignment: .trailing)
+    }
+}
+
 /// The look of a macOS pop-up button, with the value and the up-down chevrons.
 /// Use it as the label of a `Menu`, or on its own where the AppKit control can't draw.
 public struct PopUpField: View {

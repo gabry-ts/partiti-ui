@@ -248,7 +248,9 @@ public struct PopoverFooter: View {
     @Environment(\.puiGlassRendering) private var rendering
 
     /// Only the first two `actions` are shown, so the footer never wraps.
-    /// `onQuit` defaults to terminating the app.
+    /// `onQuit` defaults to terminating the app. Disfavored, so that a trailing closure
+    /// after the other arguments is the `menuItems` of the overload below, never `onQuit`.
+    @_disfavoredOverload
     public init(actions: [Action] = [],
                 onSettings: @escaping () -> Void,
                 onCheckForUpdates: @escaping () -> Void,

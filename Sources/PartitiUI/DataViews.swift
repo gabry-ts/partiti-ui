@@ -1,6 +1,7 @@
 import SwiftUI
 
 /// A capsule meter: 6 pt in cards, 4 pt in rows. Track at 8% of the primary ink.
+/// At zero only the empty track is drawn.
 public struct Meter: View {
     var value: Double
     var color: Color?
@@ -19,12 +20,15 @@ public struct Meter: View {
 
     public var body: some View {
         let c = color ?? accent.color
+        let f = min(max(value, 0), 1)
         GeometryReader { geo in
             ZStack(alignment: .leading) {
                 Capsule().fill(scheme == .dark ? Color.white.opacity(0.10) : Color.black.opacity(0.08))
-                Capsule()
-                    .fill(LinearGradient(colors: [c.opacity(0.85), c], startPoint: .leading, endPoint: .trailing))
-                    .frame(width: max(height, geo.size.width * min(max(value, 0), 1)))
+                if f > 0 {
+                    Capsule()
+                        .fill(LinearGradient(colors: [c.opacity(0.85), c], startPoint: .leading, endPoint: .trailing))
+                        .frame(width: max(height, geo.size.width * f))
+                }
                 ForEach(marks.indices, id: \.self) { i in
                     Rectangle()
                         .fill(Ink(scheme).secondary.opacity(0.7))

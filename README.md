@@ -8,7 +8,7 @@ The shared design language of [Tuuli, Kaiku, Kiito, Mittari and Kello](https://a
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/gabry-ts/partiti-ui", from: "0.2.0")
+    .package(url: "https://github.com/gabry-ts/partiti-ui", from: "0.3.0")
 ],
 targets: [
     .target(name: "MyApp", dependencies: [.product(name: "PartitiUI", package: "partiti-ui")])
@@ -38,7 +38,13 @@ struct MenuContent: View {
 
 ## Components
 
-Popover pieces (`PopoverScaffold`, `PopoverHeader`, `PopoverFooter`, `Card`, `Row`), controls (`GlassCircleButton`, `GlassCapsule`, `SegmentedPill`, `CoffeeButton`, `PUISwitchStyle`, `PUISlider`), data views (`Meter`, `GaugeRing`, `BigNumber`, `StatTile`), a full settings window kit (`SettingsWindow`, `SettingsSidebar`, `SettingsPane`, `AboutPane`), menu bar items and the glass and surface materials that back them all, plus localization support in English and Italian out of the box.
+Popover pieces (`PopoverScaffold`, `PopoverHeader`, `PopoverFooter`, `Card`, `Row`), controls (`GlassCircleButton`, `GlassCapsule`, `SegmentedPill`, `CoffeeButton`, `PUISwitchStyle`, `PUISlider`, `ValueText`, `PopUpMenu`), data views (`Meter`, `GaugeRing`, `BigNumber`, `StatTile`), a full settings window kit (`SettingsWindow`, `SettingsSidebar`, `SettingsPane`, `SettingsRow`, `SwitchRow`, `ReorderableGroup`, `AboutPane`), menu bar items and the glass and surface materials that back them all, plus localization support in English and Italian out of the box.
+
+## What's new in 0.3.0
+
+`ReorderableGroup` lets users choose what is shown and drag it into order, with `Reorder` for the move logic and for fitting a saved order to the items an app knows.
+New `SwitchRow`, `ValueText` and `PopUpMenu`; `PUISlider` takes a `step` and `onEditingChanged`, `SettingsRow` a leading symbol, sidebar entries a context menu, footer actions a keyboard shortcut.
+A trailing closure on `PopoverFooter` is now the menu items, `SettingsWindow` extends under the title bar by itself, and Check for Updates… can be disabled.
 
 ## License
 

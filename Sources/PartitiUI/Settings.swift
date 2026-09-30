@@ -362,8 +362,9 @@ public struct SettingsSidebar: View {
 }
 
 /// The settings window layout: a floating glass sidebar on the left, the selected pane on the right.
-/// Give the window a full-size content view with a transparent title bar, so the sidebar
-/// runs under the traffic lights; the sidebar radius is concentric with the window corner.
+/// Give the window a full-size content view with a transparent title bar: the layout extends
+/// under the title bar by itself, so the sidebar runs under the traffic lights; the sidebar
+/// radius is concentric with the window corner.
 public struct SettingsWindow<Pane: View>: View {
     let sections: [SidebarSection]
     @Binding var selection: String
@@ -391,6 +392,7 @@ public struct SettingsWindow<Pane: View>: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
         .background(dark ? Color(white: 0.135) : Color(white: 0.955))
+        .ignoresSafeArea(.container, edges: .top)
     }
 }
 

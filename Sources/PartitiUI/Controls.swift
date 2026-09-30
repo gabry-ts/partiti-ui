@@ -668,6 +668,7 @@ public struct CheckMark: View {
 // MARK: - Chip
 
 /// A selectable chip on a card, like Tuuli's fan modes. Active: accent wash and legible text.
+/// Disabled, the label fades and the accent wash turns neutral.
 public struct Chip: View {
     let title: Text
     var symbol: String?
@@ -675,6 +676,7 @@ public struct Chip: View {
     var action: () -> Void
     @Environment(\.puiAccent) private var accent
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.isEnabled) private var isEnabled
 
     public init(_ title: Text, symbol: String? = nil, active: Bool = false, action: @escaping () -> Void) {
         self.title = title
@@ -707,13 +709,17 @@ public struct Chip: View {
                 title.font(.system(size: 12, weight: active ? .semibold : .regular)).lineLimit(1)
                 Spacer(minLength: 0)
             }
-            .foregroundStyle(active ? accent.legible(scheme) : ink.primary)
+            .foregroundStyle(!isEnabled ? ink.tertiary : (active ? accent.legible(scheme) : ink.primary))
             .padding(.horizontal, PUI.Space.m + 2)
             .frame(height: PUI.Control.regular)
             .background {
-                ZStack {
-                    shape.fill(active ? accent.color.opacity(scheme == .dark ? 0.24 : 0.14) : ink.fill)
-                    if active { shape.strokeBorder(accent.color.opacity(scheme == .dark ? 0.55 : 0.45), lineWidth: 1) }
+                if isEnabled {
+                    ZStack {
+                        shape.fill(active ? accent.color.opacity(scheme == .dark ? 0.24 : 0.14) : ink.fill)
+                        if active { shape.strokeBorder(accent.color.opacity(scheme == .dark ? 0.55 : 0.45), lineWidth: 1) }
+                    }
+                } else {
+                    shape.fill(active ? ink.strongFill : ink.fill).opacity(0.6)
                 }
             }
             .contentShape(shape)

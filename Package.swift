@@ -13,6 +13,7 @@ let package = Package(
             name: "Mockups",
             dependencies: ["PartitiUI"],
             resources: [.copy("Icons")]
-        )
+        ),
+        .testTarget(name: "PartitiUITests", dependencies: ["PartitiUI"])
     ]
 )

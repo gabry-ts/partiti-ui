@@ -117,13 +117,17 @@ public struct GlassCapsule<Content: View>: View {
 // MARK: - Segmented pill
 
 /// Two to four options on glass. 22 pt in popovers, 28 pt in windows.
+/// The selection slides between segments with the state spring, and fades in place
+/// with Reduce Motion.
 public struct SegmentedPill<Value: Hashable>: View {
     let options: [(value: Value, title: String)]
     @Binding var selection: Value
     var height: CGFloat
     var stretch: Bool
-    @Environment(\.puiAccent) private var accent
+    @State private var hovered: Value?
+    @Namespace private var namespace
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     /// `stretch` spreads the segments over the available width.
     public init(_ options: [(value: Value, title: String)], selection: Binding<Value>,
@@ -148,20 +152,40 @@ public struct SegmentedPill<Value: Hashable>: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: height - 4)
                         .background {
-                            if on {
-                                Capsule().fill(scheme == .dark ? Color.white.opacity(0.16) : Color.white)
-                                    .shadow(color: .black.opacity(scheme == .dark ? 0.3 : 0.12), radius: 1.5, y: 0.5)
+                            ZStack {
+                                if hovered == option.value && !on {
+                                    Capsule().fill(ink.fill)
+                                }
+                                if on { thumb }
                             }
                         }
                         .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
+                .onHover { inside in
+                    if inside { hovered = option.value } else if hovered == option.value { hovered = nil }
+                }
+                .accessibilityAddTraits(on ? .isSelected : [])
             }
         }
         .padding(PUI.Space.xxs)
         .fixedSize(horizontal: !stretch, vertical: false)
         .frame(maxWidth: stretch ? .infinity : nil)
+        .animation(PUI.Motion.spring(reduceMotion: reduceMotion), value: selection)
+        .animation(PUI.Motion.hover, value: hovered)
         .puiGlass(Capsule())
+    }
+
+    /// The raised capsule under the selected segment. Matched across segments so it slides,
+    /// except with Reduce Motion, where it only fades.
+    @ViewBuilder private var thumb: some View {
+        let capsule = Capsule().fill(scheme == .dark ? Color.white.opacity(0.16) : Color.white)
+            .shadow(color: .black.opacity(scheme == .dark ? 0.3 : 0.12), radius: 1.5, y: 0.5)
+        if reduceMotion {
+            capsule.transition(.opacity)
+        } else {
+            capsule.matchedGeometryEffect(id: "selection", in: namespace)
+        }
     }
 }
 

@@ -92,3 +92,22 @@ import Testing
         #expect(zip(light, base).allSatisfy { $0 < $1 })
     }
 }
+
+@Suite struct MenuBarFontTests {
+    private func width(_ text: String, _ font: NSFont) -> CGFloat {
+        NSAttributedString(string: text, attributes: [.font: font]).size().width
+    }
+
+    @Test func matchesTheSwiftUIMenuBarFont() {
+        #expect(PUI.Font.menuBarNSFont().pointSize == PUI.Font.menuBarSize)
+        #expect(PUI.Font.menuBarNSFont(size: 15).pointSize == 15)
+        let traits = PUI.Font.menuBarNSFont().fontDescriptor.object(forKey: .traits) as? [NSFontDescriptor.TraitKey: Any]
+        let weight = traits?[.weight] as? CGFloat
+        #expect(weight.map { abs($0 - NSFont.Weight.medium.rawValue) < 0.01 } == true)
+    }
+
+    @Test func digitsAreMonospaced() {
+        let font = PUI.Font.menuBarNSFont()
+        #expect(width("1111", font) == width("8888", font))
+    }
+}

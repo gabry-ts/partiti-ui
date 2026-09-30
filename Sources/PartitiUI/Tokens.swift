@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Partiti UI: the shared design tokens of the Partiti menu bar apps.
@@ -133,7 +134,15 @@ public enum PUI {
         /// Tracking that goes with `badge`.
         public static let badgeTracking: CGFloat = 0.6
         /// The status item text: menu bar font with monospaced digits.
-        public static let menuBar = SwiftUI.Font.system(size: 13, weight: .medium).monospacedDigit()
+        public static let menuBar = SwiftUI.Font.system(size: menuBarSize, weight: .medium).monospacedDigit()
+        /// The point size of `menuBar`.
+        public static let menuBarSize: CGFloat = 13
+
+        /// `menuBar` for AppKit, for an `NSStatusItem` button drawn with an attributed title:
+        /// medium weight, monospaced digits. `size` lets an app offer a larger reading.
+        public static func menuBarNSFont(size: CGFloat = menuBarSize) -> NSFont {
+            NSFont.monospacedDigitSystemFont(ofSize: size, weight: .medium)
+        }
 
         /// The scale in order, for catalogs and previews.
         public static let scale: [(name: String, spec: String, font: SwiftUI.Font)] = [
